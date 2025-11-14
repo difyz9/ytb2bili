@@ -195,14 +195,6 @@ FileUpDir = "/path/to/media"
   model = "deepseek-chat"
   endpoint = "https://api.deepseek.com"
 
-# 应用认证配置（可选）
-[app_auth]
-  enabled = false  # 开发环境可设为 false
-  api_url = "https://www.vtranlink.com/prod-api"
-  app_id = ""
-  app_secret = ""
-  check_interval = 60
-  skip_on_error = true
 ```
 
 ### 4. 编译运行
@@ -217,16 +209,6 @@ go build -o bili_up_backend main.go
 # 运行
 ./bili_up_backend
 ```
-
-### 5. 前端启动（可选）
-
-```bash
-cd bili-up-web
-npm install
-npm run dev
-```
-
-访问 http://localhost:3000
 
 ---
 
@@ -313,67 +295,7 @@ POST /api/v1/auth/logout
 
 ---
 
-## 🔐 应用认证系统
 
-### 功能说明
-
-应用认证系统确保只有授权的应用实例可以运行。支持启动时验证和周期性重新验证。
-
-### 配置示例
-
-#### 开发环境（不启用）
-```toml
-[app_auth]
-enabled = false
-```
-
-#### 生产环境（强制认证）
-```toml
-[app_auth]
-enabled = true
-skip_on_error = false
-api_url = "https://www.vtranlink.com/prod-api"
-app_id = "your-app-id"
-app_secret = "your-app-secret"
-check_interval = 60  # 每60分钟检查一次
-```
-
-### 启动日志
-
-认证成功：
-```
-🔐 Verifying application authentication...
-✅ Application authentication successful
-   App Name: Mobile Application
-   App ID: mobile-app-001
-   Rate Limit: 1000 requests/hour
-   Status: active
-🔄 Starting periodic authentication check (interval: 60 minutes)
-```
-
-认证失败（生产模式）：
-```
-🔐 Verifying application authentication...
-❌ Application authentication failed: invalid credentials
-❌ Application cannot start without valid authentication
-```
-
-### 测试认证
-
-```bash
-# 测试认证 API
-./test_app_auth.sh
-
-# 测试应用启动
-./bili_up_backend
-```
-
-详细文档：
-- 📖 [应用认证设置指南](docs/APP_AUTH_SETUP.md)
-- 📖 [应用认证测试指南](docs/APP_AUTH_TESTING.md)
-- 📖 [应用认证功能总结](docs/APP_AUTH_SUMMARY.md)
-
----
 
 ## 🎯 任务处理流程
 
@@ -512,25 +434,6 @@ CREATE TABLE task_steps (
 3. 查看 B站账号是否有上传权限
 4. 检查 Token 是否过期
 
-### 问题4: 应用认证失败
-
-**错误**: `Application authentication failed`
-
-**解决**:
-1. 检查 `app_id` 和 `app_secret` 是否正确
-2. 测试 API 可达性：`curl -I https://www.vtranlink.com/prod-api/api/app/auth`
-3. 临时设置 `skip_on_error = true` 跳过认证
-4. 查看详细日志确认错误原因
-
----
-
-## 📚 相关文档
-
-- [应用认证设置指南](docs/APP_AUTH_SETUP.md)
-- [应用认证测试指南](docs/APP_AUTH_TESTING.md)
-- [应用认证功能总结](docs/APP_AUTH_SUMMARY.md)
-- [Bilibili API 文档](https://github.com/SocialSisterYi/bilibili-API-collect)
-
 ---
 
 ## 🤝 贡献
@@ -544,42 +447,3 @@ CREATE TABLE task_steps (
 MIT License
 
 ---
-
-## 🎉 更新日志
-
-### v1.3.0 (2024-01-01)
-- ✨ 新增应用认证系统
-- ✨ 支持启动时验证和周期性检查
-- ✨ 添加详细的认证日志
-- 📖 完善应用认证文档
-
-### v1.2.0 (2024-01-01)
-- ✨ 新增视频详情页面
-- ✨ 支持任务步骤可视化
-- ✨ 支持单个任务步骤重试
-- 🐛 修复 QR 码显示问题
-- 🐛 修复 API 404 错误
-- ✨ 添加用户信息获取功能
-
-### v1.1.0 (2024-01-01)
-- ✨ 新增 B站扫码登录
-- ✨ 新增登录状态持久化
-- ✨ 新增用户信息展示
-
-### v1.0.0 (2024-01-01)
-- 🎉 初始版本发布
-- ✨ 完整的视频处理链
-- ✨ 自动上传到 B站
-- ✨ 字幕生成和翻译
-
----
-
-## 📞 联系方式
-
-如有问题，请通过以下方式联系：
-- 提交 GitHub Issue
-- 发送邮件至: [your-email]
-
----
-
-**Happy Coding! 🚀**
