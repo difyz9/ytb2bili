@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"github.com/difyz9/ytb2bili/internal/core"
-	"github.com/difyz9/ytb2bili/internal/storage"
-	"github.com/difyz9/bilibili-go-sdk/bilibili"
 	"bytes"
 	"fmt"
+	"github.com/difyz9/bilibili-go-sdk/bilibili"
+	"github.com/difyz9/ytb2bili/internal/core"
+	"github.com/difyz9/ytb2bili/internal/storage"
 	"image/color"
 	"image/png"
 	"log"
@@ -74,10 +74,18 @@ func (h *AuthHandler) getQRCode(c *gin.Context) {
 		return
 	}
 
+	// 构造完整的二维码URL
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	host := c.Request.Host
+	fullQRCodeURL := fmt.Sprintf("%s://%s/api/v1/auth/qrcode/image/%s", scheme, host, qrResp.Data.AuthCode)
+
 	c.JSON(http.StatusOK, QRCodeResponse{
 		Code:      0,
 		Message:   "success",
-		QRCodeURL: fmt.Sprintf("/api/v1/auth/qrcode/image/%s", qrResp.Data.AuthCode),
+		QRCodeURL: fullQRCodeURL,
 		AuthCode:  qrResp.Data.AuthCode,
 	})
 }
@@ -182,13 +190,13 @@ func (h *AuthHandler) pollQRCode(c *gin.Context) {
 			loginInfo.TokenInfo.Face = myInfo.Face
 			if myInfo.Mid > 0 {
 				loginInfo.TokenInfo.Mid = myInfo.Mid
+			}
+			// 转换为存储格式
+			userBasicInfo = storage.ConvertMyInfoToUserInfo(myInfo)
+		} else {
+			log.Printf("Warning: Failed to get myinfo: %v", err)
 		}
-		// 转换为存储格式
-		userBasicInfo = storage.ConvertMyInfoToUserInfo(myInfo)
-	} else {
-		log.Printf("Warning: Failed to get myinfo: %v", err)
-	}
-}	// 登录成功后自动保存到本地（包括用户信息）
+	} // 登录成功后自动保存到本地（包括用户信息）
 	store := storage.GetDefaultStore()
 	if userBasicInfo != nil {
 		// 保存登录信息和用户信息
@@ -315,11 +323,11 @@ func (h *AuthHandler) checkLoginStatus(c *gin.Context) {
 					loginInfo.TokenInfo.Face = myInfo.Face
 					if myInfo.Mid > 0 {
 						loginInfo.TokenInfo.Mid = myInfo.Mid
-				}
-				userBasicInfo = storage.ConvertMyInfoToUserInfo(myInfo)
-			} else {
-				log.Printf("Warning: Failed to get myinfo: %v", err)
-			}				// 保存更新后的信息（包括用户信息）
+					}
+					userBasicInfo = storage.ConvertMyInfoToUserInfo(myInfo)
+				} else {
+					log.Printf("Warning: Failed to get myinfo: %v", err)
+				} // 保存更新后的信息（包括用户信息）
 				if userBasicInfo != nil {
 					store.SaveWithUserInfo(loginInfo, userBasicInfo)
 				} else {
