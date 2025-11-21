@@ -40,7 +40,33 @@ func TranscodeVideo(inputVideoPath, outputVideoPath, preset string, crf int, aud
 	return nil
 }
 
-//web/wKSc9gbX6VA/audio/audio_8.mp3
+// ExtractWaveAudio 从视频文件中分离出WAV格式的音频
+func ExtractWaveAudio(inputFile, outputFile string) error {
+	// 构造 ffmpeg 命令，提取音频并转换为WAV格式
+	cmd := exec.Command(
+		"ffmpeg",
+		"-y",                    // 覆盖输出文件
+		"-i", inputFile,         // 输入文件
+		"-vn",                   // 不处理视频流
+        "-acodec", "pcm_s16le",  // PCM 16位
+	   "-ar", "16000",          // 16kHz 采样率（whisper 标准）
+        "-ac", "1",              // 单声道（语音识别足够）
+        outputFile,
+	)
+
+	// 设置标准输出和标准错误
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// 执行命令
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("ffmpeg 提取WAV音频失败: %v", err)
+	}
+
+	fmt.Printf("成功从 %s 提取WAV音频到 %s\n", inputFile, outputFile)
+	return nil
+}
 
 // ExtractAudio 从视频文件中分离出音频
 func ExtractAudio(inputFile, outputFile string) error {
