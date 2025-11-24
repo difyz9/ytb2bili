@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"github.com/difyz9/ytb2bili/internal/core"
-	"github.com/difyz9/ytb2bili/internal/core/services"
-	"github.com/difyz9/ytb2bili/pkg/store/model"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +8,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/difyz9/ytb2bili/internal/core"
+	"github.com/difyz9/ytb2bili/internal/core/services"
+	"github.com/difyz9/ytb2bili/pkg/store/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +23,7 @@ type VideoHandler struct {
 	UploadScheduler   interface {
 		ExecuteManualUpload(videoID, taskType string) error
 	}
-	AnalyticsHandler  *AnalyticsHandler
+	AnalyticsHandler *AnalyticsHandler
 }
 
 func NewVideoHandler(app *core.AppServer, savedVideoService *services.SavedVideoService, taskStepService *services.TaskStepService) *VideoHandler {
@@ -47,6 +48,7 @@ func (h *VideoHandler) RegisterRoutes(api *gin.RouterGroup) {
 	{
 		video.GET("", h.getVideoList)
 		video.GET("/:id", h.getVideoDetail)
+		video.DELETE("/:id", h.deleteVideo)
 		video.POST("/:id/steps/:stepName/retry", h.retryTaskStep)
 		video.GET("/:id/files", h.getVideoFiles)
 		video.POST("/:id/upload/video", h.manualUploadVideo)
@@ -71,34 +73,34 @@ type VideoListData struct {
 
 // VideoInfo 视频信息
 type VideoInfo struct {
-	ID              uint              `json:"id"`
-	VideoID         string            `json:"video_id"`
-	Title           string            `json:"title"`
-	URL             string            `json:"url"`
-	Status          string            `json:"status"`
-	GeneratedTitle  string            `json:"generated_title"`
-	GeneratedDesc   string            `json:"generated_desc"`
-	GeneratedTags   string            `json:"generated_tags"`
-	BiliBVID        string            `json:"bili_bvid"`
-	BiliAID         int64             `json:"bili_aid"`
-	CreatedAt       string            `json:"created_at"`
-	UpdatedAt       string            `json:"updated_at"`
-	TaskSteps       []TaskStepInfo    `json:"task_steps,omitempty"`
-	Progress        map[string]interface{} `json:"progress,omitempty"`
-	CoverImage      string            `json:"cover_image,omitempty"`
-	MetaData        map[string]interface{} `json:"meta_data,omitempty"`
+	ID             uint                   `json:"id"`
+	VideoID        string                 `json:"video_id"`
+	Title          string                 `json:"title"`
+	URL            string                 `json:"url"`
+	Status         string                 `json:"status"`
+	GeneratedTitle string                 `json:"generated_title"`
+	GeneratedDesc  string                 `json:"generated_desc"`
+	GeneratedTags  string                 `json:"generated_tags"`
+	BiliBVID       string                 `json:"bili_bvid"`
+	BiliAID        int64                  `json:"bili_aid"`
+	CreatedAt      string                 `json:"created_at"`
+	UpdatedAt      string                 `json:"updated_at"`
+	TaskSteps      []TaskStepInfo         `json:"task_steps,omitempty"`
+	Progress       map[string]interface{} `json:"progress,omitempty"`
+	CoverImage     string                 `json:"cover_image,omitempty"`
+	MetaData       map[string]interface{} `json:"meta_data,omitempty"`
 }
 
 // TaskStepInfo 任务步骤信息
 type TaskStepInfo struct {
-	StepName   string `json:"step_name"`
-	StepOrder  int    `json:"step_order"`
-	Status     string `json:"status"`
-	StartTime  string `json:"start_time"`
-	EndTime    string `json:"end_time"`
-	Duration   int64  `json:"duration"`
-	ErrorMsg   string `json:"error_msg"`
-	CanRetry   bool   `json:"can_retry"`
+	StepName  string `json:"step_name"`
+	StepOrder int    `json:"step_order"`
+	Status    string `json:"status"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+	Duration  int64  `json:"duration"`
+	ErrorMsg  string `json:"error_msg"`
+	CanRetry  bool   `json:"can_retry"`
 }
 
 // getVideoList 获取视频列表
@@ -106,20 +108,20 @@ func (h *VideoHandler) getVideoList(c *gin.Context) {
 	// 解析分页参数
 	pageStr := c.DefaultQuery("page", "1")
 	limitStr := c.DefaultQuery("limit", "10")
-	
+
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
 		page = 1
 	}
-	
+
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit < 1 || limit > 100 {
 		limit = 10
 	}
-	
+
 	// 计算偏移量
 	offset := (page - 1) * limit
-	
+
 	// 获取视频列表
 	savedVideos, total, err := h.SavedVideoService.GetVideosPaginated(offset, limit)
 	if err != nil {
@@ -130,7 +132,7 @@ func (h *VideoHandler) getVideoList(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 转换为响应格式
 	var videos []VideoInfo
 	for _, sv := range savedVideos {
@@ -149,7 +151,7 @@ func (h *VideoHandler) getVideoList(c *gin.Context) {
 			UpdatedAt:      sv.UpdatedAt.Format("2006-01-02 15:04:05"),
 		})
 	}
-	
+
 	c.JSON(http.StatusOK, VideoListResponse{
 		Code:    200,
 		Message: "success",
@@ -165,11 +167,11 @@ func (h *VideoHandler) getVideoList(c *gin.Context) {
 // getVideoDetail 获取视频详情
 func (h *VideoHandler) getVideoDetail(c *gin.Context) {
 	idStr := c.Param("id")
-	
+
 	// 尝试解析为数字ID，如果失败则当作video_id（字符串）处理
 	var savedVideo *model.SavedVideo
 	var err error
-	
+
 	if id, parseErr := strconv.ParseUint(idStr, 10, 32); parseErr == nil {
 		// 如果可以解析为数字，则按ID查询
 		savedVideo, err = h.SavedVideoService.GetByID(uint(id))
@@ -177,7 +179,7 @@ func (h *VideoHandler) getVideoDetail(c *gin.Context) {
 		// 否则按video_id查询
 		savedVideo, err = h.SavedVideoService.GetVideoByVideoID(idStr)
 	}
-	
+
 	if err != nil {
 		h.App.Logger.Errorf("获取视频详情失败: %v", err)
 		c.JSON(http.StatusNotFound, VideoListResponse{
@@ -186,13 +188,13 @@ func (h *VideoHandler) getVideoDetail(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 获取任务步骤
 	taskSteps, err := h.TaskStepService.GetTaskStepsByVideoID(savedVideo.VideoID)
 	if err != nil {
 		h.App.Logger.Errorf("获取任务步骤失败: %v", err)
 	}
-	
+
 	// 转换任务步骤格式
 	var taskStepInfos []TaskStepInfo
 	for _, step := range taskSteps {
@@ -204,29 +206,29 @@ func (h *VideoHandler) getVideoDetail(c *gin.Context) {
 			ErrorMsg:  step.ErrorMsg,
 			CanRetry:  step.CanRetry,
 		}
-		
+
 		if step.StartTime != nil {
 			stepInfo.StartTime = step.StartTime.Format("2006-01-02 15:04:05")
 		}
 		if step.EndTime != nil {
 			stepInfo.EndTime = step.EndTime.Format("2006-01-02 15:04:05")
 		}
-		
+
 		taskStepInfos = append(taskStepInfos, stepInfo)
 	}
-	
+
 	// 获取任务进度
 	progress, err := h.TaskStepService.GetTaskProgress(savedVideo.VideoID)
 	if err != nil {
 		h.App.Logger.Errorf("获取任务进度失败: %v", err)
 	}
-	
+
 	// 获取元数据文件
 	metaData := h.getVideoMetaData(savedVideo.VideoID)
-	
+
 	// 获取封面图片
 	coverImage := h.getVideoCoverImage(savedVideo.VideoID)
-	
+
 	videoInfo := VideoInfo{
 		ID:             savedVideo.ID,
 		VideoID:        savedVideo.VideoID,
@@ -245,7 +247,7 @@ func (h *VideoHandler) getVideoDetail(c *gin.Context) {
 		CoverImage:     coverImage,
 		MetaData:       metaData,
 	}
-	
+
 	c.JSON(http.StatusOK, VideoListResponse{
 		Code:    200,
 		Message: "success",
@@ -257,17 +259,17 @@ func (h *VideoHandler) getVideoDetail(c *gin.Context) {
 func (h *VideoHandler) retryTaskStep(c *gin.Context) {
 	idStr := c.Param("id")
 	stepName := c.Param("stepName")
-	
+
 	// 尝试解析为数字ID，如果失败则当作video_id处理
 	var savedVideo *model.SavedVideo
 	var err error
-	
+
 	if id, parseErr := strconv.ParseUint(idStr, 10, 32); parseErr == nil {
 		savedVideo, err = h.SavedVideoService.GetByID(uint(id))
 	} else {
 		savedVideo, err = h.SavedVideoService.GetVideoByVideoID(idStr)
 	}
-	
+
 	if err != nil {
 		h.App.Logger.Errorf("获取视频详情失败: %v", err)
 		c.JSON(http.StatusNotFound, VideoListResponse{
@@ -276,7 +278,7 @@ func (h *VideoHandler) retryTaskStep(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 检查步骤是否存在且可重试
 	taskStep, err := h.TaskStepService.GetTaskStepByName(savedVideo.VideoID, stepName)
 	if err != nil {
@@ -286,7 +288,7 @@ func (h *VideoHandler) retryTaskStep(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	if !taskStep.CanRetry {
 		c.JSON(http.StatusBadRequest, VideoListResponse{
 			Code:    400,
@@ -294,10 +296,10 @@ func (h *VideoHandler) retryTaskStep(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 重新执行任务步骤
 	h.App.Logger.Infof("🔄 用户请求重试任务步骤: %s - %s", savedVideo.VideoID, stepName)
-	
+
 	// 重置任务步骤状态为待执行
 	err = h.TaskStepService.UpdateTaskStepStatus(savedVideo.VideoID, stepName, "pending")
 	if err != nil {
@@ -308,9 +310,9 @@ func (h *VideoHandler) retryTaskStep(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	h.App.Logger.Infof("✅ 任务步骤 %s 已重置为待执行状态，等待调度器处理", stepName)
-	
+
 	c.JSON(http.StatusOK, VideoListResponse{
 		Code:    200,
 		Message: fmt.Sprintf("任务步骤 %s 已加入重新执行队列", stepName),
@@ -323,20 +325,20 @@ func (h *VideoHandler) retryTaskStep(c *gin.Context) {
 	})
 }
 
-// getVideoFiles 获取视频相关文件列表
-func (h *VideoHandler) getVideoFiles(c *gin.Context) {
+// deleteVideo 删除视频及其相关数据
+func (h *VideoHandler) deleteVideo(c *gin.Context) {
 	idStr := c.Param("id")
-	
+
 	// 尝试解析为数字ID，如果失败则当作video_id处理
 	var savedVideo *model.SavedVideo
 	var err error
-	
+
 	if id, parseErr := strconv.ParseUint(idStr, 10, 32); parseErr == nil {
 		savedVideo, err = h.SavedVideoService.GetByID(uint(id))
 	} else {
 		savedVideo, err = h.SavedVideoService.GetVideoByVideoID(idStr)
 	}
-	
+
 	if err != nil {
 		h.App.Logger.Errorf("获取视频详情失败: %v", err)
 		c.JSON(http.StatusNotFound, VideoListResponse{
@@ -345,18 +347,86 @@ func (h *VideoHandler) getVideoFiles(c *gin.Context) {
 		})
 		return
 	}
-	
+
+	h.App.Logger.Infof("🗑️ 用户请求删除视频: %s (ID: %d)", savedVideo.VideoID, savedVideo.ID)
+
+	// 1. 删除相关的任务步骤
+	if err := h.TaskStepService.DeleteTaskStepsByVideoID(savedVideo.VideoID); err != nil {
+		h.App.Logger.Errorf("删除任务步骤失败: %v", err)
+		c.JSON(http.StatusInternalServerError, VideoListResponse{
+			Code:    500,
+			Message: "删除任务步骤失败",
+		})
+		return
+	}
+
+	// 2. 删除视频文件（可选）
+	videoDir := h.getVideoDirectory(savedVideo.VideoID)
+	if _, err := os.Stat(videoDir); err == nil {
+		if err := os.RemoveAll(videoDir); err != nil {
+			h.App.Logger.Warnf("⚠️ 删除视频文件目录失败: %v", err)
+			// 不中断流程，继续删除数据库记录
+		} else {
+			h.App.Logger.Infof("✅ 已删除视频文件目录: %s", videoDir)
+		}
+	}
+
+	// 3. 删除数据库记录（软删除）
+	if err := h.SavedVideoService.DeleteVideo(savedVideo.ID); err != nil {
+		h.App.Logger.Errorf("删除视频记录失败: %v", err)
+		c.JSON(http.StatusInternalServerError, VideoListResponse{
+			Code:    500,
+			Message: "删除视频记录失败",
+		})
+		return
+	}
+
+	h.App.Logger.Infof("✅ 视频删除成功: %s", savedVideo.VideoID)
+
+	c.JSON(http.StatusOK, VideoListResponse{
+		Code:    200,
+		Message: "视频删除成功",
+		Data: gin.H{
+			"video_id": savedVideo.VideoID,
+			"id":       savedVideo.ID,
+		},
+	})
+}
+
+// getVideoFiles 获取视频相关文件列表
+func (h *VideoHandler) getVideoFiles(c *gin.Context) {
+	idStr := c.Param("id")
+
+	// 尝试解析为数字ID，如果失败则当作video_id处理
+	var savedVideo *model.SavedVideo
+	var err error
+
+	if id, parseErr := strconv.ParseUint(idStr, 10, 32); parseErr == nil {
+		savedVideo, err = h.SavedVideoService.GetByID(uint(id))
+	} else {
+		savedVideo, err = h.SavedVideoService.GetVideoByVideoID(idStr)
+	}
+
+	if err != nil {
+		h.App.Logger.Errorf("获取视频详情失败: %v", err)
+		c.JSON(http.StatusNotFound, VideoListResponse{
+			Code:    404,
+			Message: "视频不存在",
+		})
+		return
+	}
+
 	// 获取视频文件目录
 	videoDir := h.getVideoDirectory(savedVideo.VideoID)
 	files := h.listVideoFiles(videoDir)
-	
+
 	c.JSON(http.StatusOK, VideoListResponse{
 		Code:    200,
 		Message: "success",
 		Data: gin.H{
-			"video_id": savedVideo.VideoID,
+			"video_id":  savedVideo.VideoID,
 			"directory": videoDir,
-			"files": files,
+			"files":     files,
 		},
 	})
 }
@@ -365,23 +435,23 @@ func (h *VideoHandler) getVideoFiles(c *gin.Context) {
 func (h *VideoHandler) getVideoMetaData(videoID string) map[string]interface{} {
 	videoDir := h.getVideoDirectory(videoID)
 	metaPath := filepath.Join(videoDir, "meta.json")
-	
+
 	if _, err := os.Stat(metaPath); os.IsNotExist(err) {
 		return nil
 	}
-	
+
 	data, err := os.ReadFile(metaPath)
 	if err != nil {
 		h.App.Logger.Errorf("读取meta.json失败: %v", err)
 		return nil
 	}
-	
+
 	var metaData map[string]interface{}
 	if err := json.Unmarshal(data, &metaData); err != nil {
 		h.App.Logger.Errorf("解析meta.json失败: %v", err)
 		return nil
 	}
-	
+
 	return metaData
 }
 
@@ -389,7 +459,7 @@ func (h *VideoHandler) getVideoMetaData(videoID string) map[string]interface{} {
 func (h *VideoHandler) getVideoCoverImage(videoID string) string {
 	videoDir := h.getVideoDirectory(videoID)
 	coverExtensions := []string{".jpg", ".jpeg", ".png", ".webp"}
-	
+
 	for _, ext := range coverExtensions {
 		coverPath := filepath.Join(videoDir, "cover"+ext)
 		if _, err := os.Stat(coverPath); err == nil {
@@ -397,7 +467,7 @@ func (h *VideoHandler) getVideoCoverImage(videoID string) string {
 			return fmt.Sprintf("/static/videos/%s/cover%s", videoID, ext)
 		}
 	}
-	
+
 	return ""
 }
 
@@ -405,7 +475,7 @@ func (h *VideoHandler) getVideoCoverImage(videoID string) string {
 func (h *VideoHandler) getVideoDirectory(videoID string) string {
 	// 根据配置获取文件上传目录
 	baseDir := h.App.Config.FileUpDir
-	
+
 	// 按日期组织的目录结构：/file_upload/media/2025-10-13/videoID/
 	// 这里简化处理，实际需要根据创建时间确定日期
 	return filepath.Join(baseDir, "media", "*", videoID)
@@ -414,46 +484,46 @@ func (h *VideoHandler) getVideoDirectory(videoID string) string {
 // listVideoFiles 列出视频目录中的所有文件
 func (h *VideoHandler) listVideoFiles(dirPattern string) []map[string]interface{} {
 	var files []map[string]interface{}
-	
+
 	// 使用glob匹配目录
 	matches, err := filepath.Glob(dirPattern)
 	if err != nil || len(matches) == 0 {
 		return files
 	}
-	
+
 	dir := matches[0] // 取第一个匹配的目录
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		h.App.Logger.Errorf("读取目录失败: %v", err)
 		return files
 	}
-	
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		info, err := entry.Info()
 		if err != nil {
 			continue
 		}
-		
+
 		fileType := h.getFileType(entry.Name())
 		files = append(files, map[string]interface{}{
-			"name":      entry.Name(),
-			"size":      info.Size(),
-			"type":      fileType,
-			"modified":  info.ModTime().Format("2006-01-02 15:04:05"),
+			"name":     entry.Name(),
+			"size":     info.Size(),
+			"type":     fileType,
+			"modified": info.ModTime().Format("2006-01-02 15:04:05"),
 		})
 	}
-	
+
 	return files
 }
 
 // getFileType 根据文件扩展名判断文件类型
 func (h *VideoHandler) getFileType(filename string) string {
 	ext := strings.ToLower(filepath.Ext(filename))
-	
+
 	switch ext {
 	case ".mp4", ".flv", ".mkv", ".webm", ".avi", ".mov":
 		return "video"
@@ -473,17 +543,17 @@ func (h *VideoHandler) getFileType(filename string) string {
 // manualUploadVideo 手动触发视频上传
 func (h *VideoHandler) manualUploadVideo(c *gin.Context) {
 	idStr := c.Param("id")
-	
+
 	// 尝试解析为数字ID，如果失败则当作video_id处理
 	var savedVideo *model.SavedVideo
 	var err error
-	
+
 	if id, parseErr := strconv.ParseUint(idStr, 10, 32); parseErr == nil {
 		savedVideo, err = h.SavedVideoService.GetByID(uint(id))
 	} else {
 		savedVideo, err = h.SavedVideoService.GetVideoByVideoID(idStr)
 	}
-	
+
 	if err != nil {
 		h.App.Logger.Errorf("获取视频详情失败: %v", err)
 		c.JSON(http.StatusNotFound, VideoListResponse{
@@ -492,7 +562,7 @@ func (h *VideoHandler) manualUploadVideo(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 检查视频状态是否允许上传
 	if savedVideo.Status != "200" && savedVideo.Status != "299" {
 		c.JSON(http.StatusBadRequest, VideoListResponse{
@@ -501,7 +571,7 @@ func (h *VideoHandler) manualUploadVideo(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 检查上传调度器是否已设置
 	if h.UploadScheduler == nil {
 		c.JSON(http.StatusInternalServerError, VideoListResponse{
@@ -510,9 +580,9 @@ func (h *VideoHandler) manualUploadVideo(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	h.App.Logger.Infof("🚀 用户手动触发视频上传: %s (%s)", savedVideo.VideoID, savedVideo.Title)
-	
+
 	// 更新状态为上传中
 	if err := h.SavedVideoService.UpdateStatus(savedVideo.ID, "201"); err != nil {
 		h.App.Logger.Errorf("更新视频状态失败: %v", err)
@@ -522,7 +592,7 @@ func (h *VideoHandler) manualUploadVideo(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 异步执行上传任务
 	go func() {
 		if err := h.UploadScheduler.ExecuteManualUpload(savedVideo.VideoID, "video"); err != nil {
@@ -535,7 +605,7 @@ func (h *VideoHandler) manualUploadVideo(c *gin.Context) {
 			h.SavedVideoService.UpdateStatus(savedVideo.ID, "300")
 		}
 	}()
-	
+
 	c.JSON(http.StatusOK, VideoListResponse{
 		Code:    200,
 		Message: "视频上传任务已启动",
@@ -550,17 +620,17 @@ func (h *VideoHandler) manualUploadVideo(c *gin.Context) {
 // manualUploadSubtitle 手动触发字幕上传
 func (h *VideoHandler) manualUploadSubtitle(c *gin.Context) {
 	idStr := c.Param("id")
-	
+
 	// 尝试解析为数字ID，如果失败则当作video_id处理
 	var savedVideo *model.SavedVideo
 	var err error
-	
+
 	if id, parseErr := strconv.ParseUint(idStr, 10, 32); parseErr == nil {
 		savedVideo, err = h.SavedVideoService.GetByID(uint(id))
 	} else {
 		savedVideo, err = h.SavedVideoService.GetVideoByVideoID(idStr)
 	}
-	
+
 	if err != nil {
 		h.App.Logger.Errorf("获取视频详情失败: %v", err)
 		c.JSON(http.StatusNotFound, VideoListResponse{
@@ -569,7 +639,7 @@ func (h *VideoHandler) manualUploadSubtitle(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 检查视频状态是否允许上传字幕
 	if savedVideo.Status != "300" && savedVideo.Status != "399" {
 		c.JSON(http.StatusBadRequest, VideoListResponse{
@@ -578,7 +648,7 @@ func (h *VideoHandler) manualUploadSubtitle(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 检查是否已有BVID
 	if savedVideo.BiliBVID == "" {
 		c.JSON(http.StatusBadRequest, VideoListResponse{
@@ -587,7 +657,7 @@ func (h *VideoHandler) manualUploadSubtitle(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 检查上传调度器是否已设置
 	if h.UploadScheduler == nil {
 		c.JSON(http.StatusInternalServerError, VideoListResponse{
@@ -596,9 +666,9 @@ func (h *VideoHandler) manualUploadSubtitle(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	h.App.Logger.Infof("🚀 用户手动触发字幕上传: %s (%s)", savedVideo.VideoID, savedVideo.Title)
-	
+
 	// 更新状态为上传字幕中
 	if err := h.SavedVideoService.UpdateStatus(savedVideo.ID, "301"); err != nil {
 		h.App.Logger.Errorf("更新视频状态失败: %v", err)
@@ -608,7 +678,7 @@ func (h *VideoHandler) manualUploadSubtitle(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// 异步执行上传字幕任务
 	go func() {
 		if err := h.UploadScheduler.ExecuteManualUpload(savedVideo.VideoID, "subtitle"); err != nil {
@@ -621,7 +691,7 @@ func (h *VideoHandler) manualUploadSubtitle(c *gin.Context) {
 			h.SavedVideoService.UpdateStatus(savedVideo.ID, "400")
 		}
 	}()
-	
+
 	c.JSON(http.StatusOK, VideoListResponse{
 		Code:    200,
 		Message: "字幕上传任务已启动",

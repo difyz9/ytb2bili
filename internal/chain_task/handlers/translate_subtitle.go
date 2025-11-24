@@ -1,26 +1,27 @@
 package handlers
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+
 	"github.com/difyz9/ytb2bili/internal/chain_task/base"
 	"github.com/difyz9/ytb2bili/internal/chain_task/manager"
 	"github.com/difyz9/ytb2bili/internal/core"
 	"github.com/difyz9/ytb2bili/pkg/cos"
 	"github.com/difyz9/ytb2bili/pkg/utils"
-	"fmt"
 	"gorm.io/gorm"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
 )
 
 type TranslateSubtitle struct {
 	base.BaseTask
-	App         *core.AppServer
-	DB          *gorm.DB
-	APIKey      string
-	GroupSize   int
-	MaxWorkers  int // 最大并发数
+	App        *core.AppServer
+	DB         *gorm.DB
+	APIKey     string
+	GroupSize  int
+	MaxWorkers int // 最大并发数
 }
 
 func NewTranslateSubtitle(name string, app *core.AppServer, stateManager *manager.StateManager, client *cos.CosClient, db *gorm.DB, apiKey string) *TranslateSubtitle {
@@ -43,12 +44,12 @@ func (t *TranslateSubtitle) getCurrentAPIKey() (string, error) {
 	if t.App.Config.DeepSeekTransConfig == nil || !t.App.Config.DeepSeekTransConfig.Enabled {
 		return "", fmt.Errorf("DeepSeek 翻译服务未启用")
 	}
-	
+
 	apiKey := t.App.Config.DeepSeekTransConfig.ApiKey
 	if apiKey == "" {
 		return "", fmt.Errorf("DeepSeek API Key 未配置")
 	}
-	
+
 	return apiKey, nil
 }
 
@@ -71,7 +72,7 @@ func (t *TranslateSubtitle) Execute(context map[string]interface{}) bool {
 		context["error"] = t.getTranslationError(err)
 		return false
 	}
-	
+
 	t.App.Logger.Infof("🔑 使用DeepSeek API Key: %s", maskAPIKey(currentAPIKey))
 	// 更新当前使用的API Key
 	t.APIKey = currentAPIKey
@@ -114,7 +115,7 @@ func (t *TranslateSubtitle) Execute(context map[string]interface{}) bool {
 	// 4. 执行并发翻译
 	totalGroups := (len(texts) + t.GroupSize - 1) / t.GroupSize
 	t.App.Logger.Infof("� 开始并发翻译，每组 %d 句，共 %d 组，并发数: %d", t.GroupSize, totalGroups, t.MaxWorkers)
-	
+
 	translatedTexts, err := t.translateTextsInGroupsConcurrent(texts)
 	if err != nil {
 		t.App.Logger.Errorf("❌ 翻译失败: %v", err)
@@ -139,9 +140,9 @@ func (t *TranslateSubtitle) Execute(context map[string]interface{}) bool {
 		t.App.Logger.Warnf("⚠️  字幕校验失败，使用原始翻译: %v", err)
 	} else {
 		if validationResult.MissingEntries > 0 {
-			t.App.Logger.Infof("🔧 检测到 %d 个问题条目，已尝试修复 %d 个", 
+			t.App.Logger.Infof("🔧 检测到 %d 个问题条目，已尝试修复 %d 个",
 				validationResult.MissingEntries, len(validationResult.FixedEntries))
-			
+
 			if optimizedPath != "" {
 				// 使用优化后的文件替换原文件
 				if err := os.Rename(optimizedPath, zhSRTPath); err == nil {
@@ -155,7 +156,7 @@ func (t *TranslateSubtitle) Execute(context map[string]interface{}) bool {
 	context["en_srt_path"] = enSRTPath
 	context["zh_srt_path"] = zhSRTPath
 	context["translated_count"] = len(translatedTexts)
-	
+
 	// 添加校验结果信息
 	if validationResult != nil {
 		context["validation_result"] = map[string]interface{}{
@@ -243,40 +244,40 @@ func (t *TranslateSubtitle) generateTranslatedSRTContent(entries []SRTEntry, tra
 func (t *TranslateSubtitle) translateTextsInGroupsConcurrent(texts []string) ([]string, error) {
 	totalGroups := (len(texts) + t.GroupSize - 1) / t.GroupSize
 	results := make([][]string, totalGroups)
-	
+
 	// 创建工作池
 	type translateTask struct {
 		groupIndex int
 		texts      []string
 	}
-	
+
 	taskChannel := make(chan translateTask, totalGroups)
 	resultChannel := make(chan struct {
 		groupIndex int
 		result     []string
 		err        error
 	}, totalGroups)
-	
+
 	// 启动工作者
 	var wg sync.WaitGroup
 	workerCount := t.MaxWorkers
 	if workerCount > totalGroups {
 		workerCount = totalGroups
 	}
-	
+
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
 			t.App.Logger.Debugf("🔧 启动翻译工作者 %d", workerID)
-			
+
 			for task := range taskChannel {
-				t.App.Logger.Infof("⏳ 工作者 %d 处理第 %d/%d 组 (%d句)", 
+				t.App.Logger.Infof("⏳ 工作者 %d 处理第 %d/%d 组 (%d句)",
 					workerID, task.groupIndex+1, totalGroups, len(task.texts))
-				
+
 				// 使用简化的翻译方法
 				translated, err := t.translateGroupSimple(task.texts)
-				
+
 				resultChannel <- struct {
 					groupIndex int
 					result     []string
@@ -289,7 +290,7 @@ func (t *TranslateSubtitle) translateTextsInGroupsConcurrent(texts []string) ([]
 			}
 		}(i)
 	}
-	
+
 	// 分发任务
 	go func() {
 		for i := 0; i < len(texts); i += t.GroupSize {
@@ -297,7 +298,7 @@ func (t *TranslateSubtitle) translateTextsInGroupsConcurrent(texts []string) ([]
 			if end > len(texts) {
 				end = len(texts)
 			}
-			
+
 			taskChannel <- translateTask{
 				groupIndex: i / t.GroupSize,
 				texts:      texts[i:end],
@@ -305,13 +306,13 @@ func (t *TranslateSubtitle) translateTextsInGroupsConcurrent(texts []string) ([]
 		}
 		close(taskChannel)
 	}()
-	
+
 	// 收集结果
 	go func() {
 		wg.Wait()
 		close(resultChannel)
 	}()
-	
+
 	// 处理结果
 	var lastErr error
 	for result := range resultChannel {
@@ -322,17 +323,17 @@ func (t *TranslateSubtitle) translateTextsInGroupsConcurrent(texts []string) ([]
 		}
 		results[result.groupIndex] = result.result
 	}
-	
+
 	if lastErr != nil {
 		return nil, lastErr
 	}
-	
+
 	// 合并结果
 	var allTranslated []string
 	for _, groupResult := range results {
 		allTranslated = append(allTranslated, groupResult...)
 	}
-	
+
 	return allTranslated, nil
 }
 
@@ -341,10 +342,10 @@ func (t *TranslateSubtitle) translateGroupSimple(texts []string) ([]string, erro
 	if len(texts) == 0 {
 		return []string{}, nil
 	}
-	
+
 	// 直接组合文本
 	combinedText := strings.Join(texts, "\n###SENTENCE_BREAK###\n")
-	
+
 	// 简化的系统提示
 	systemPrompt := fmt.Sprintf(`你是一个专业的视频字幕翻译专家。将给出的 %d 句英文字幕翻译成中文。
 
@@ -542,43 +543,43 @@ func (t *TranslateSubtitle) callDeepSeekAPI(systemPrompt, userPrompt string) (st
 // getTranslationError 将翻译错误转换为用户友好的错误信息
 func (t *TranslateSubtitle) getTranslationError(err error) string {
 	errorStr := err.Error()
-	
+
 	if strings.Contains(errorStr, "DeepSeek API Key 未配置") {
 		return "翻译失败：DeepSeek API Key未配置，请在设置中配置API Key"
 	}
-	
+
 	if strings.Contains(errorStr, "401") || strings.Contains(errorStr, "unauthorized") {
 		return "翻译失败：DeepSeek API Key无效或已过期，请检查API Key设置"
 	}
-	
+
 	if strings.Contains(errorStr, "429") || strings.Contains(errorStr, "rate limit") {
 		return "翻译失败：API调用频率过快，请稍后重试"
 	}
-	
+
 	if strings.Contains(errorStr, "insufficient_quota") || strings.Contains(errorStr, "quota") {
 		return "翻译失败：DeepSeek账户余额不足，请充值后重试"
 	}
-	
+
 	if strings.Contains(errorStr, "timeout") || strings.Contains(errorStr, "deadline exceeded") {
 		return "翻译失败：网络超时，请检查网络连接后重试"
 	}
-	
+
 	if strings.Contains(errorStr, "connection") {
 		return "翻译失败：网络连接异常，请检查网络状态"
 	}
-	
+
 	if strings.Contains(errorStr, "max_tokens") {
 		return "翻译失败：字幕内容过长，请尝试分段处理"
 	}
-	
+
 	if strings.Contains(errorStr, "context_length_exceeded") {
 		return "翻译失败：单次翻译内容过多，系统将自动分批重试"
 	}
-	
+
 	if strings.Contains(errorStr, "API Key") {
 		return "翻译失败：API Key配置问题，请检查设置"
 	}
-	
+
 	// 通用翻译错误
 	return "翻译失败：AI翻译服务暂时不可用，请稍后重试"
 }
@@ -607,7 +608,7 @@ func (t *TranslateSubtitle) validateAndOptimizeSubtitles(originalPath, translate
 
 	// 生成优化后的文件路径
 	optimizedPath := filepath.Join(t.StateManager.CurrentDir, "zh_optimized.srt")
-	
+
 	// 执行校验和修复
 	result, err := validator.ValidateAndFixSubtitles(originalPath, translatedPath, optimizedPath)
 	if err != nil {

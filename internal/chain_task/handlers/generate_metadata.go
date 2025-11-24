@@ -1,25 +1,26 @@
 package handlers
 
 import (
-	"github.com/difyz9/ytb2bili/internal/chain_task/base"
-	"github.com/difyz9/ytb2bili/internal/chain_task/manager"
-	"github.com/difyz9/ytb2bili/internal/core"
-	"github.com/difyz9/ytb2bili/internal/core/services"
-	"github.com/difyz9/ytb2bili/pkg/cos"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/difyz9/ytb2bili/internal/chain_task/base"
+	"github.com/difyz9/ytb2bili/internal/chain_task/manager"
+	"github.com/difyz9/ytb2bili/internal/core"
+	"github.com/difyz9/ytb2bili/internal/core/services"
+	"github.com/difyz9/ytb2bili/pkg/cos"
 	"gorm.io/gorm"
 )
 
 type GenerateMetadata struct {
 	base.BaseTask
-	App                 *core.AppServer
-	DeepSeekClient      *DeepSeekClient
-	SavedVideoService   *services.SavedVideoService
+	App               *core.AppServer
+	DeepSeekClient    *DeepSeekClient
+	SavedVideoService *services.SavedVideoService
 }
 
 func NewGenerateMetadata(name string, app *core.AppServer, stateManager *manager.StateManager, client *cos.CosClient, apiKey string, db *gorm.DB, savedVideoService *services.SavedVideoService) *GenerateMetadata {
@@ -40,12 +41,12 @@ func (g *GenerateMetadata) getCurrentDeepSeekClient() (*DeepSeekClient, error) {
 	if g.App.Config.DeepSeekTransConfig == nil || !g.App.Config.DeepSeekTransConfig.Enabled {
 		return nil, fmt.Errorf("DeepSeek 翻译服务未启用")
 	}
-	
+
 	apiKey := g.App.Config.DeepSeekTransConfig.ApiKey
 	if apiKey == "" {
 		return nil, fmt.Errorf("DeepSeek API Key 未配置")
 	}
-	
+
 	return NewDeepSeekClient(apiKey), nil
 }
 
@@ -69,7 +70,7 @@ func (g *GenerateMetadata) Execute(context map[string]interface{}) bool {
 		context["video_description"] = "包含字幕的视频"
 		return true
 	}
-	
+
 	g.App.Logger.Infof("🔑 使用最新的DeepSeek配置生成元数据")
 	// 更新当前使用的客户端
 	g.DeepSeekClient = client
@@ -153,7 +154,7 @@ func (g *GenerateMetadata) Execute(context map[string]interface{}) bool {
 		savedVideo.GeneratedTitle = metadata.Title
 		savedVideo.GeneratedDesc = metadata.Description
 		savedVideo.GeneratedTags = strings.Join(metadata.Tags, ",")
-		
+
 		if err := g.SavedVideoService.UpdateVideo(savedVideo); err != nil {
 			g.App.Logger.Errorf("❌ 保存元数据到数据库失败: %v", err)
 		} else {
@@ -207,8 +208,8 @@ func (g *GenerateMetadata) generateMetadataFromDeepSeek(subtitleText string) (*V
 %s
 
 要求：
-1. 标题要简洁有力，不超过30个字，能够准确概括视频主题，吸引观众点击
-2. 描述要详细，200-300字左右，包含视频的主要内容和亮点
+1. 标题要简洁有力，严格控制在30个字以内（B站限制80字，但建议30字以内更易读），能够准确概括视频主题，吸引观众点击
+2. 描述要详细但不要过长，严格控制在600-800字以内，包含视频的主要内容和亮点（注意：B站简介限制2000字，需要预留约200字给原视频链接和分隔线）
 3. 标签要准确反映视频内容，3-5个即可
 4. 必须使用中文
 5. 输出格式必须是JSON，格式如下：
@@ -265,27 +266,27 @@ func (g *GenerateMetadata) generateMetadataFromDeepSeek(subtitleText string) (*V
 func (g *GenerateMetadata) saveMetadataToFile(metadata *VideoMetadata) error {
 	// 构建文件路径
 	metaFilePath := filepath.Join(g.StateManager.CurrentDir, "meta.json")
-	
+
 	// 创建一个包含更多信息的元数据结构
 	fileMetadata := map[string]interface{}{
-		"video_id":    g.StateManager.VideoID,
-		"title":       metadata.Title,
-		"description": metadata.Description,
-		"tags":        metadata.Tags,
+		"video_id":     g.StateManager.VideoID,
+		"title":        metadata.Title,
+		"description":  metadata.Description,
+		"tags":         metadata.Tags,
 		"generated_at": time.Now().Format("2006-01-02 15:04:05"),
 	}
-	
+
 	// 转换为格式化的JSON
 	jsonData, err := json.MarshalIndent(fileMetadata, "", "  ")
 	if err != nil {
 		return fmt.Errorf("序列化元数据失败: %v", err)
 	}
-	
+
 	// 写入文件
 	if err := os.WriteFile(metaFilePath, jsonData, 0644); err != nil {
 		return fmt.Errorf("写入meta.json文件失败: %v", err)
 	}
-	
+
 	g.App.Logger.Infof("📁 meta.json 文件已保存: %s", metaFilePath)
 	return nil
 }

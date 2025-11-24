@@ -79,15 +79,15 @@ func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 		fmt.Printf("字幕数据: %s\n", subtitlesJSONStr)
 	}
 
-	// 检查是否已存在相同的 videoId
+	// 检查是否已存在相同的 videoId（包括已删除的记录）
 	var existingVideo model.SavedVideo
-	err = h.App.DB.Where("video_id = ?", videoID).First(&existingVideo).Error
+	err = h.App.DB.Unscoped().Where("video_id = ?", videoID).First(&existingVideo).Error
 
 	var savedVideo *model.SavedVideo
 	isExisting := false
 
 	if err == nil {
-		// 找到了记录，更新字段
+		// 找到了记录（可能是已删除的），更新字段
 		isExisting = true
 		existingVideo.URL = req.URL
 		existingVideo.Title = req.Title
@@ -97,9 +97,11 @@ func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 		existingVideo.PlaylistID = req.PlaylistID
 		existingVideo.Timestamp = req.Timestamp
 		existingVideo.SavedAt = req.SavedAt
+		existingVideo.Status = "001" // 重置状态为待处理
+		existingVideo.DeletedAt = gorm.DeletedAt{} // 恢复记录（清除删除标记）
 
-		// 更新到数据库
-		if err := h.App.DB.Save(&existingVideo).Error; err != nil {
+		// 更新到数据库（使用 Unscoped 以便更新已删除的记录）
+		if err := h.App.DB.Unscoped().Save(&existingVideo).Error; err != nil {
 			fmt.Printf("更新视频失败，字幕数据长度: %d\n", len(subtitlesJSONStr))
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
@@ -108,6 +110,10 @@ func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 			return
 		}
 		savedVideo = &existingVideo
+		
+		if existingVideo.DeletedAt.Valid {
+			fmt.Printf("✅ 恢复已删除的视频: %s\n", videoID)
+		}
 	} else if err == gorm.ErrRecordNotFound {
 		// 记录不存在，创建新记录
 		savedVideo = &model.SavedVideo{

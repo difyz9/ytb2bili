@@ -1,6 +1,10 @@
 package chain_task
 
 import (
+	"fmt"
+	"path/filepath"
+	"time"
+
 	"github.com/difyz9/ytb2bili/internal/chain_task/handlers"
 	"github.com/difyz9/ytb2bili/internal/chain_task/manager"
 	"github.com/difyz9/ytb2bili/internal/core"
@@ -8,13 +12,11 @@ import (
 	"github.com/difyz9/ytb2bili/internal/core/services"
 	"github.com/difyz9/ytb2bili/internal/core/types"
 	"github.com/difyz9/ytb2bili/pkg/store/model"
-	"fmt"
-	"path/filepath"
-	"time"
+
+	"sync"
 
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
-	"sync"
 
 	"gorm.io/gorm"
 )
@@ -290,7 +292,7 @@ func (h *ChainTaskHandler) RunSingleTaskStep(videoID, stepName string) error {
 	// 根据步骤名称创建对应的任务
 	switch stepName {
 	case "下载视频":
-		task = handlers.NewDownloadVideo("下载视频", h.App, stateManager, h.App.CosClient)
+		task = handlers.NewDownloadVideo("下载视频", h.App, stateManager, h.App.CosClient, h.SavedVideoService)
 	case "生成字幕":
 		task = handlers.NewGenerateSubtitles("生成字幕", h.App, stateManager, h.App.CosClient, h.SavedVideoService)
 	case "翻译字幕":

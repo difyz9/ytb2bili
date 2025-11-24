@@ -1,11 +1,12 @@
 package services
 
 import (
-	"github.com/difyz9/ytb2bili/pkg/store/model"
 	"encoding/json"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/difyz9/ytb2bili/pkg/store/model"
 
 	"gorm.io/gorm"
 )
@@ -228,14 +229,29 @@ func (s *TaskStepService) ResetAllRunningTasks() error {
 // GetPendingSteps 获取所有状态为pending的任务步骤
 func (s *TaskStepService) GetPendingSteps() ([]*model.TaskStep, error) {
 	var steps []*model.TaskStep
-	
-	result := s.DB.Where("status = ?", model.TaskStepStatusPending).
-		Order("created_at ASC").
+
+	// 使用 JOIN 查询，只获取未删除视频的待处理步骤
+	result := s.DB.Table("cw_task_steps").
+		Select("cw_task_steps.*").
+		Joins("INNER JOIN cw_saved_videos ON cw_task_steps.video_id = cw_saved_videos.video_id").
+		Where("cw_task_steps.status = ?", model.TaskStepStatusPending).
+		Where("cw_task_steps.deleted_at IS NULL").
+		Where("cw_saved_videos.deleted_at IS NULL").
+		Order("cw_task_steps.created_at ASC").
 		Find(&steps)
-	
+
 	if result.Error != nil {
 		return nil, fmt.Errorf("查询待重试步骤失败: %v", result.Error)
 	}
-	
+
 	return steps, nil
+}
+
+// DeleteTaskStepsByVideoID 删除指定视频的所有任务步骤（软删除）
+func (s *TaskStepService) DeleteTaskStepsByVideoID(videoID string) error {
+	result := s.DB.Where("video_id = ?", videoID).Delete(&model.TaskStep{})
+	if result.Error != nil {
+		return fmt.Errorf("删除任务步骤失败: %v", result.Error)
+	}
+	return nil
 }

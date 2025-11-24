@@ -1,18 +1,94 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/difyz9/bilibili-go-sdk/bilibili"
 	"github.com/difyz9/ytb2bili/internal/chain_task/base"
 	"github.com/difyz9/ytb2bili/internal/chain_task/manager"
 	"github.com/difyz9/ytb2bili/internal/core"
 	"github.com/difyz9/ytb2bili/internal/core/services"
 	"github.com/difyz9/ytb2bili/internal/storage"
-	"github.com/difyz9/bilibili-go-sdk/bilibili"
 	"github.com/difyz9/ytb2bili/pkg/cos"
-	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
+	"github.com/difyz9/ytb2bili/pkg/utils"
 )
+
+// fetchAndSaveMetadata 尝试从 YouTube 获取元数据并保存到数据库
+func (t *UploadToBilibili) fetchAndSaveMetadata(videoID string) error {
+	t.App.Logger.Infof("🔄 尝试补充获取视频元数据: %s", videoID)
+
+	// 1. 找到 yt-dlp
+	var installDir string
+	if t.App.Config != nil && t.App.Config.YtDlpPath != "" {
+		installDir = t.App.Config.YtDlpPath
+	}
+	manager := utils.NewYtDlpManager(t.App.Logger, installDir)
+	if !manager.IsInstalled() {
+		return fmt.Errorf("未找到 yt-dlp")
+	}
+	ytdlpPath := manager.GetBinaryPath()
+
+	// 2. 构建命令
+	videoURL := fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID)
+	command := []string{
+		ytdlpPath,
+		"--dump-json",
+		"--no-download",
+		videoURL,
+	}
+
+	// 添加 cookies 支持
+	configDir := filepath.Dir(t.App.Config.Path)
+	cookiesPath := filepath.Join(configDir, "cookies.txt")
+	// 如果配置文件目录下的 cookies.txt 不存在，尝试当前目录
+	if _, err := os.Stat(cookiesPath); err != nil {
+		cookiesPath = "cookies.txt"
+	}
+	if _, err := os.Stat(cookiesPath); err == nil {
+		absPath, _ := filepath.Abs(cookiesPath)
+		command = append(command, "--cookies", absPath)
+	}
+
+	// 添加代理
+	if t.App.Config != nil && t.App.Config.ProxyConfig != nil && t.App.Config.ProxyConfig.UseProxy && t.App.Config.ProxyConfig.ProxyHost != "" {
+		command = append(command, "--proxy", t.App.Config.ProxyConfig.ProxyHost)
+	}
+
+	// 3. 执行命令
+	cmd := exec.Command(command[0], command[1:]...)
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("执行 yt-dlp 失败: %v", err)
+	}
+
+	// 4. 解析 JSON
+	var metadata VideoMetadataInfo
+	if err := json.Unmarshal(output, &metadata); err != nil {
+		return fmt.Errorf("解析元数据失败: %v", err)
+	}
+
+	// 5. 更新数据库
+	savedVideo, err := t.SavedVideoService.GetVideoByVideoID(videoID)
+	if err != nil {
+		return fmt.Errorf("获取视频记录失败: %v", err)
+	}
+
+	savedVideo.Title = metadata.Title
+	savedVideo.Description = metadata.Description
+	// 如果需要，也可以更新其他字段
+
+	if err := t.SavedVideoService.UpdateVideo(savedVideo); err != nil {
+		return fmt.Errorf("更新数据库失败: %v", err)
+	}
+
+	t.App.Logger.Infof("✅ 成功补充获取并保存元数据: %s", metadata.Title)
+	return nil
+}
 
 type UploadToBilibili struct {
 	base.BaseTask
@@ -197,28 +273,155 @@ func (t *UploadToBilibili) buildStudioInfo(video *bilibili.Video, context map[st
 	if err != nil {
 		t.App.Logger.Warnf("⚠️ 无法从数据库获取视频信息: %v，将使用默认值", err)
 	} else {
-		// 优先使用AI生成的标题
-		if savedVideo.GeneratedTitle != "" {
-			title = savedVideo.GeneratedTitle
-			t.App.Logger.Infof("✓ 使用数据库中AI生成的标题: %s", title)
-		} else if savedVideo.Title != "" {
-			title = savedVideo.Title
-			t.App.Logger.Infof("✓ 使用数据库中的原始标题: %s", title)
+		// 如果标题为空，尝试补充获取元数据
+		if savedVideo.Title == "" {
+			if err := t.fetchAndSaveMetadata(t.StateManager.VideoID); err == nil {
+				// 重新获取
+				savedVideo, _ = t.SavedVideoService.GetVideoByVideoID(t.StateManager.VideoID)
+			} else {
+				t.App.Logger.Warnf("⚠️ 补充获取元数据失败: %v", err)
+			}
 		}
 
-		// 优先使用AI生成的描述
-		if savedVideo.GeneratedDesc != "" {
-			desc = savedVideo.GeneratedDesc
-			t.App.Logger.Infof("✓ 使用数据库中AI生成的描述")
-		} else if savedVideo.Description != "" {
-			desc = savedVideo.Description
-			t.App.Logger.Infof("✓ 使用数据库中的原始描述")
+		// 根据配置选择标题来源
+		biliConfig := t.App.Config.BilibiliConfig
+		if biliConfig != nil && !biliConfig.UseOriginalTitle {
+			// 配置为使用AI生成标题
+			if savedVideo.GeneratedTitle != "" {
+				title = savedVideo.GeneratedTitle
+				t.App.Logger.Infof("✓ 使用AI生成的标题: %s", title)
+			} else if savedVideo.Title != "" {
+				title = savedVideo.Title
+				t.App.Logger.Infof("✓ AI标题不存在，回退使用原始标题: %s", title)
+			}
+		} else {
+			// 默认使用原始标题（YouTube原标题）
+			if savedVideo.Title != "" {
+				title = savedVideo.Title
+				t.App.Logger.Infof("✓ 使用YouTube原始标题: %s", title)
+			} else if savedVideo.GeneratedTitle != "" {
+				title = savedVideo.GeneratedTitle
+				t.App.Logger.Infof("✓ 原始标题不存在，回退使用AI标题: %s", title)
+			}
+		}
+		
+		// B站标题长度限制（80个字符）
+		const maxTitleLength = 80
+		titleRunes := []rune(title)
+		if len(titleRunes) > maxTitleLength {
+			title = string(titleRunes[:maxTitleLength])
+			t.App.Logger.Warnf("⚠️ 标题过长，已截断至 %d 字符: %s", maxTitleLength, title)
+		}
+		t.App.Logger.Infof("📝 标题长度: %d/%d 字符", len([]rune(title)), maxTitleLength)
+
+		// 过滤无效的描述（YouTube的默认描述）
+		isValidDescription := func(desc string) bool {
+			if desc == "" {
+				return false
+			}
+			// 过滤YouTube的默认描述
+			invalidDescriptions := []string{
+				"YouTube",
+				"自动上传的视频",
+				"Uploaded by",
+				"Auto-generated",
+			}
+			for _, invalid := range invalidDescriptions {
+				if strings.Contains(desc, invalid) && len(desc) < 50 {
+					return false
+				}
+			}
+			return true
+		}
+		
+		// 根据配置选择描述来源
+		if biliConfig != nil && biliConfig.CustomDescTemplate != "" {
+			// 使用自定义模板
+			desc = biliConfig.CustomDescTemplate
+			desc = strings.ReplaceAll(desc, "{original_desc}", savedVideo.Description)
+			desc = strings.ReplaceAll(desc, "{ai_desc}", savedVideo.GeneratedDesc)
+			t.App.Logger.Infof("✓ 使用自定义描述模板")
+		} else if biliConfig != nil && biliConfig.UseOriginalDesc {
+			// 配置为使用原始描述
+			if isValidDescription(savedVideo.Description) {
+				desc = savedVideo.Description
+				t.App.Logger.Infof("✓ 使用YouTube原始描述")
+			} else if savedVideo.GeneratedDesc != "" {
+				desc = savedVideo.GeneratedDesc
+				t.App.Logger.Infof("✓ 原始描述无效，回退使用AI描述")
+			} else {
+				desc = ""
+				t.App.Logger.Info("✓ 无有效描述，仅使用原视频链接")
+			}
+		} else {
+			// 默认使用AI生成的描述
+			if savedVideo.GeneratedDesc != "" {
+				desc = savedVideo.GeneratedDesc
+				t.App.Logger.Infof("✓ 使用AI生成的描述")
+			} else if isValidDescription(savedVideo.Description) {
+				desc = savedVideo.Description
+				t.App.Logger.Infof("✓ AI描述不存在，回退使用原始描述")
+			} else {
+				desc = ""
+				t.App.Logger.Info("✓ 无有效描述，仅使用原视频链接")
+			}
 		}
 
 		// 使用AI生成的标签
 		if savedVideo.GeneratedTags != "" {
 			tags = savedVideo.GeneratedTags
 			t.App.Logger.Infof("✓ 使用数据库中AI生成的标签: %s", tags)
+		}
+		
+		// B站简介字数限制（2000字）
+		const maxDescLength = 2000
+		
+		// 在描述末尾添加原视频链接
+		linkSuffix := ""
+		if savedVideo.URL != "" {
+			linkSuffix = fmt.Sprintf("\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📺 原视频链接：%s\n🔄 本视频为转载内容，仅供学习交流使用", savedVideo.URL)
+		}
+		
+		// 计算链接后缀的长度（字符数）
+		linkSuffixLength := len([]rune(linkSuffix))
+		t.App.Logger.Infof("🔗 原视频链接后缀长度: %d 字符", linkSuffixLength)
+		
+		// 预先截断描述，确保有足够空间给链接
+		descRunes := []rune(desc)
+		originalDescLength := len(descRunes)
+		t.App.Logger.Infof("📄 原始描述长度: %d 字符", originalDescLength)
+		
+		// 计算可用的描述长度（留20个字符的安全缓冲）
+		maxAllowedDescLength := maxDescLength - linkSuffixLength - 20
+		if maxAllowedDescLength < 0 {
+			maxAllowedDescLength = 0
+		}
+		
+		// 如果描述超过可用长度，截断它
+		if len(descRunes) > maxAllowedDescLength {
+			if maxAllowedDescLength > 3 {
+				desc = string(descRunes[:maxAllowedDescLength]) + "..."
+				t.App.Logger.Warnf("⚠️ 描述过长，已截断至 %d 字符（原长度: %d）", maxAllowedDescLength, originalDescLength)
+			} else {
+				desc = ""
+				t.App.Logger.Warn("⚠️ 空间不足，已清空描述内容，仅保留原视频链接")
+			}
+		}
+		
+		// 添加链接后缀
+		if linkSuffix != "" {
+			desc += linkSuffix
+			t.App.Logger.Infof("✓ 已添加原视频链接到描述")
+		}
+		
+		// 最终检查长度
+		finalDescLength := len([]rune(desc))
+		t.App.Logger.Infof("📝 最终描述长度: %d/%d 字符", finalDescLength, maxDescLength)
+		
+		// 最后的安全检查，如果还是超长，强制截断
+		if finalDescLength > maxDescLength {
+			desc = string([]rune(desc)[:maxDescLength])
+			t.App.Logger.Errorf("❌ 描述仍然超长！强制截断至 %d 字符", maxDescLength)
 		}
 	}
 
@@ -253,8 +456,31 @@ func (t *UploadToBilibili) buildStudioInfo(video *bilibili.Video, context map[st
 	video.Title = title
 	t.App.Logger.Infof("✓ 设置视频Title为: %s", title)
 
+	// 读取配置
+	copyright := 1 // 默认自制
+	noReprint := 1 // 默认禁止转载
+	source := ""
+
+	if t.App.Config.BilibiliConfig != nil {
+		if t.App.Config.BilibiliConfig.Copyright > 0 {
+			copyright = t.App.Config.BilibiliConfig.Copyright
+		}
+		noReprint = t.App.Config.BilibiliConfig.NoReprint
+		source = t.App.Config.BilibiliConfig.Source
+	}
+
+	// 如果是转载且没有提供来源，使用视频URL作为来源
+	if copyright == 2 && source == "" {
+		if savedVideo != nil {
+			source = savedVideo.URL
+		} else {
+			// 如果无法获取URL，构建一个默认的YouTube URL
+			source = fmt.Sprintf("https://www.youtube.com/watch?v=%s", t.StateManager.VideoID)
+		}
+	}
+
 	studio := &bilibili.Studio{
-		Copyright:     1,                          // 1=自制（从其他平台搬运也算自制）
+		Copyright:     copyright,
 		Title:         t.truncateTitle(title, 80), // B站标题最长80字符
 		Desc:          desc,
 		Tag:           tags,
@@ -265,11 +491,12 @@ func (t *UploadToBilibili) buildStudioInfo(video *bilibili.Video, context map[st
 		Interactive:   0,
 		Dolby:         0,
 		LosslessMusic: 0,
-		NoReprint:     1, // 禁止转载
+		NoReprint:     noReprint,
 		OpenElec:      0,
 		Videos: []bilibili.Video{
 			*video,
 		},
+		Source: source,
 	}
 
 	t.App.Logger.Infof("📋 投稿信息:")
@@ -279,6 +506,10 @@ func (t *UploadToBilibili) buildStudioInfo(video *bilibili.Video, context map[st
 	t.App.Logger.Infof("  分区: %d", studio.Tid)
 	t.App.Logger.Infof("  封面: %s", studio.Cover)
 	t.App.Logger.Infof("  字幕: %v", studio.OpenSubtitle)
+	t.App.Logger.Infof("  类型: %d (1=自制, 2=转载)", studio.Copyright)
+	if studio.Copyright == 2 {
+		t.App.Logger.Infof("  来源: %s", studio.Source)
+	}
 
 	return studio
 }

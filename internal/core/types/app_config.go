@@ -3,8 +3,9 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"os"
+
+	"github.com/BurntSushi/toml"
 )
 
 // AppConfig 应用程序配置
@@ -25,6 +26,17 @@ type AppConfig struct {
 	TranslatorConfig    *TranslatorConfig    `toml:"TranslatorConfig"`    // 翻译器总配置
 	ProxyConfig         *ProxyConfig         `toml:"ProxyConfig"`         // 代理配置
 	AnalyticsConfig     *AnalyticsConfig     `toml:"AnalyticsConfig"`     // 数据分析配置
+	BilibiliConfig      *BilibiliConfig      `toml:"BilibiliConfig"`      // Bilibili上传配置
+}
+
+// BilibiliConfig Bilibili上传配置
+type BilibiliConfig struct {
+	Copyright          int    `toml:"copyright"`            // 1=自制, 2=转载
+	Source             string `toml:"source"`               // 转载来源（当 Copyright=2 时必填）
+	NoReprint          int    `toml:"no_reprint"`           // 0=允许转载, 1=禁止转载
+	UseOriginalTitle   bool   `toml:"use_original_title"`   // true=使用原视频标题, false=使用AI生成标题
+	UseOriginalDesc    bool   `toml:"use_original_desc"`    // true=使用原视频描述, false=使用AI生成描述
+	CustomDescTemplate string `toml:"custom_desc_template"` // 自定义描述模板，支持变量: {original_desc}, {ai_desc}
 }
 
 type TencentCosConfig struct {
@@ -195,6 +207,16 @@ func NewDefaultConfig() *AppConfig {
 			ProductID: "bili-up-api",
 			Debug:     false,
 		},
+
+		// Bilibili 配置（默认值，可被 config.toml 覆盖）
+		BilibiliConfig: &BilibiliConfig{
+			Copyright:          1, // 默认自制
+			Source:             "",
+			NoReprint:          1,     // 默认禁止转载
+			UseOriginalTitle:   true,  // 默认使用原视频标题
+			UseOriginalDesc:    false, // 默认使用AI生成的描述
+			CustomDescTemplate: "",    // 默认不使用自定义模板
+		},
 	}
 }
 
@@ -224,6 +246,7 @@ func LoadConfig(configFile string) (*AppConfig, error) {
 		DeepSeekTransConfig *DeepSeekTransConfig `toml:"DeepSeekTransConfig"`
 		ProxyConfig         *ProxyConfig         `toml:"ProxyConfig"`
 		AnalyticsConfig     *AnalyticsConfig     `toml:"AnalyticsConfig"`
+		BilibiliConfig      *BilibiliConfig      `toml:"BilibiliConfig"`
 	}
 
 	// 解码TOML配置文件
@@ -252,6 +275,9 @@ func LoadConfig(configFile string) (*AppConfig, error) {
 	if fileConfig.AnalyticsConfig != nil {
 		config.AnalyticsConfig = fileConfig.AnalyticsConfig
 	}
+	if fileConfig.BilibiliConfig != nil {
+		config.BilibiliConfig = fileConfig.BilibiliConfig
+	}
 
 	return config, nil
 }
@@ -271,6 +297,7 @@ func SaveConfig(config *AppConfig) error {
 		DeepSeekTransConfig *DeepSeekTransConfig `toml:"DeepSeekTransConfig"`
 		ProxyConfig         *ProxyConfig         `toml:"ProxyConfig"`
 		AnalyticsConfig     *AnalyticsConfig     `toml:"AnalyticsConfig"`
+		BilibiliConfig      *BilibiliConfig      `toml:"BilibiliConfig"`
 	}{
 		Listen:              config.Listen,
 		Environment:         config.Environment,
@@ -283,6 +310,7 @@ func SaveConfig(config *AppConfig) error {
 		DeepSeekTransConfig: config.DeepSeekTransConfig,
 		ProxyConfig:         config.ProxyConfig,
 		AnalyticsConfig:     config.AnalyticsConfig,
+		BilibiliConfig:      config.BilibiliConfig,
 	}
 
 	buf := new(bytes.Buffer)

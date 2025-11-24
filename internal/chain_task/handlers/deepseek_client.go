@@ -21,10 +21,10 @@ type DeepSeekClient struct {
 
 // DeepSeekRequest API请求结构
 type DeepSeekRequest struct {
-	Model    string              `json:"model"`
-	Messages []DeepSeekMessage   `json:"messages"`
-	Stream   bool                `json:"stream"`
-	Settings *DeepSeekSettings   `json:"settings,omitempty"`
+	Model    string            `json:"model"`
+	Messages []DeepSeekMessage `json:"messages"`
+	Stream   bool              `json:"stream"`
+	Settings *DeepSeekSettings `json:"settings,omitempty"`
 }
 
 // DeepSeekMessage 消息结构
@@ -41,12 +41,12 @@ type DeepSeekSettings struct {
 
 // DeepSeekResponse API响应结构
 type DeepSeekResponse struct {
-	ID      string               `json:"id"`
-	Object  string               `json:"object"`
-	Created int64                `json:"created"`
-	Model   string               `json:"model"`
-	Choices []DeepSeekChoice     `json:"choices"`
-	Usage   DeepSeekUsage        `json:"usage"`
+	ID      string           `json:"id"`
+	Object  string           `json:"object"`
+	Created int64            `json:"created"`
+	Model   string           `json:"model"`
+	Choices []DeepSeekChoice `json:"choices"`
+	Usage   DeepSeekUsage    `json:"usage"`
 }
 
 // DeepSeekChoice 选择结构
@@ -79,25 +79,25 @@ func NewDeepSeekClient(apiKey string) *DeepSeekClient {
 // ChatCompletion 执行对话补全（带重试机制）
 func (c *DeepSeekClient) ChatCompletion(systemPrompt, userPrompt string) (string, error) {
 	var lastErr error
-	
+
 	for attempt := 0; attempt <= c.MaxRetries; attempt++ {
 		if attempt > 0 {
 			time.Sleep(c.RetryDelay * time.Duration(attempt))
 		}
-		
+
 		result, err := c.doRequest(systemPrompt, userPrompt)
 		if err == nil {
 			return result, nil
 		}
-		
+
 		lastErr = err
-		
+
 		// 如果是API限制错误，延长等待时间
 		if strings.Contains(err.Error(), "rate limit") || strings.Contains(err.Error(), "429") {
 			time.Sleep(time.Duration(attempt+1) * 5 * time.Second)
 		}
 	}
-	
+
 	return "", fmt.Errorf("重试 %d 次后仍然失败: %v", c.MaxRetries, lastErr)
 }
 
@@ -117,7 +117,7 @@ func (c *DeepSeekClient) doRequest(systemPrompt, userPrompt string) (string, err
 		},
 		Stream: false,
 		Settings: &DeepSeekSettings{
-			Temperature: 0.3, // 降低随机性，提高一致性
+			Temperature: 0.3,  // 降低随机性，提高一致性
 			MaxTokens:   4000, // 增加最大token数
 		},
 	}

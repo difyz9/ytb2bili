@@ -96,6 +96,7 @@ func (s *UploadScheduler) uploadNextVideo() error {
 	err := s.Db.Table("cw_saved_videos").
 		Select("id, video_id, title, created_at").
 		Where("status = ?", "200").
+		Where("deleted_at IS NULL").
 		Order("created_at ASC").
 		Limit(1).
 		Find(&videos).Error
@@ -149,6 +150,7 @@ func (s *UploadScheduler) uploadNextSubtitle() error {
 	err := s.Db.Table("cw_saved_videos").
 		Select("id, video_id, title, updated_at, created_at").
 		Where("status = ? AND updated_at <= ?", "300", oneHourAgo).
+		Where("deleted_at IS NULL").
 		Order("updated_at ASC").
 		Limit(1).
 		Find(&videos).Error

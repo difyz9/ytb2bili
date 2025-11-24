@@ -8,6 +8,7 @@ import (
 	"html"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	"os"
 	"regexp"
@@ -105,31 +106,36 @@ func (t *Task03Handler) Execute(context map[string]interface{}) bool {
 
 // getVideoSrtURL 获取视频字幕 URL
 func (t *Task03Handler) getVideoSrtURL(videoID string) (string, error) {
+	videoURL := fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID)
 
-	url := fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID)
+	// 尝试使用代理（如果配置了）
+	useProxy := t.App.Config != nil && t.App.Config.ProxyConfig != nil && 
+		t.App.Config.ProxyConfig.UseProxy && t.App.Config.ProxyConfig.ProxyHost != ""
 
-	req, err := http.NewRequest("GET", url, nil)
+	if useProxy {
+		t.App.Logger.Info("🔄 尝试使用代理获取字幕URL...")
+		srtURL, err := t.fetchSrtURL(videoURL, true)
+		if err == nil {
+			return srtURL, nil
+		}
+		t.App.Logger.Warnf("⚠️ 代理获取字幕URL失败: %v，尝试不使用代理重试...", err)
+	}
+
+	// 不使用代理重试
+	t.App.Logger.Info("🔄 尝试不使用代理获取字幕URL...")
+	return t.fetchSrtURL(videoURL, false)
+}
+
+// fetchSrtURL 实际获取字幕URL的方法
+func (t *Task03Handler) fetchSrtURL(videoURL string, useProxy bool) (string, error) {
+	req, err := http.NewRequest("GET", videoURL, nil)
 	if err != nil {
 		return "", err
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-	client := &http.Client{}
-	//
-	//if t.App.Config.HttpProxy != "" {
-	//
-	//
-	//	// 创建 Transport，设置代理
-	//	transport := &http.Transport{
-	//		Proxy: http.ProxyURL(proxyURL),
-	//	}
-	//
-	//	// 创建 HTTP 客户端
-	//	client = &http.Client{
-	//		Transport: transport,
-	//	}
-	//}
+	client := t.createHTTPClient(useProxy)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -159,15 +165,35 @@ func (t *Task03Handler) getVideoSrtURL(videoID string) (string, error) {
 }
 
 // getSrtFile 获取字幕文件内容
-func (t *Task03Handler) getSrtFile(url string) (*TranscriptData, error) {
-	req, err := http.NewRequest("GET", url, nil)
+func (t *Task03Handler) getSrtFile(srtURL string) (*TranscriptData, error) {
+	// 尝试使用代理（如果配置了）
+	useProxy := t.App.Config != nil && t.App.Config.ProxyConfig != nil && 
+		t.App.Config.ProxyConfig.UseProxy && t.App.Config.ProxyConfig.ProxyHost != ""
+
+	if useProxy {
+		t.App.Logger.Info("🔄 尝试使用代理获取字幕内容...")
+		transcript, err := t.fetchSrtContent(srtURL, true)
+		if err == nil {
+			return transcript, nil
+		}
+		t.App.Logger.Warnf("⚠️ 代理获取字幕内容失败: %v，尝试不使用代理重试...", err)
+	}
+
+	// 不使用代理重试
+	t.App.Logger.Info("🔄 尝试不使用代理获取字幕内容...")
+	return t.fetchSrtContent(srtURL, false)
+}
+
+// fetchSrtContent 实际获取字幕内容的方法
+func (t *Task03Handler) fetchSrtContent(srtURL string, useProxy bool) (*TranscriptData, error) {
+	req, err := http.NewRequest("GET", srtURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
 
-	client := &http.Client{}
+	client := t.createHTTPClient(useProxy)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -196,7 +222,6 @@ func (t *Task03Handler) getSrtFile(url string) (*TranscriptData, error) {
 		}
 
 		// 处理特殊字符
-
 		textInfos = append(textInfos, TextInfo{
 			StartTime: startTime,
 			Duration:  duration,
@@ -205,4 +230,27 @@ func (t *Task03Handler) getSrtFile(url string) (*TranscriptData, error) {
 	}
 
 	return &TranscriptData{Transcript: textInfos}, nil
+}
+
+// createHTTPClient 创建HTTP客户端（支持代理）
+func (t *Task03Handler) createHTTPClient(useProxy bool) *http.Client {
+	client := &http.Client{}
+
+	if useProxy && t.App.Config != nil && t.App.Config.ProxyConfig != nil && 
+		t.App.Config.ProxyConfig.UseProxy && t.App.Config.ProxyConfig.ProxyHost != "" {
+		proxyURL, err := url.Parse(t.App.Config.ProxyConfig.ProxyHost)
+		if err == nil {
+			transport := &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			}
+			client = &http.Client{
+				Transport: transport,
+			}
+			t.App.Logger.Infof("📡 使用代理: %s", t.App.Config.ProxyConfig.ProxyHost)
+		} else {
+			t.App.Logger.Warnf("⚠️ 代理URL解析失败: %v", err)
+		}
+	}
+
+	return client
 }

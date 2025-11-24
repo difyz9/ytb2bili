@@ -51,5 +51,19 @@ yt_dlp_path = ""
   debug = false
   encryption_key = ""
 
+[BilibiliConfig]
+  copyright = 2                # 1=自制, 2=转载
+  source = "YouTube"           # 转载来源
+  no_reprint = 1               # 0=允许转载, 1=禁止转载
+  use_original_title = true    # true=使用原视频标题（推荐）, false=使用AI生成标题
+  use_original_desc = false    # true=使用原视频描述, false=使用AI生成描述（推荐）
+  custom_desc_template = ""    # 自定义描述模板（可选），支持变量: {original_desc}, {ai_desc}
 
-
+  # 自定义描述模板示例：
+  # custom_desc_template = """
+  # 【视频内容】
+  # {ai_desc}
+  # 
+  # 【原视频描述】
+  # {original_desc}
+  # """

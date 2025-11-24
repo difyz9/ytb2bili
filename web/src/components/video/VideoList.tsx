@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Play, RefreshCw } from 'lucide-react';
+import { Play, RefreshCw, Trash2 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 interface VideoListProps {
@@ -50,6 +50,33 @@ export default function VideoList({ onVideoSelect }: VideoListProps) {
 
   const handleRefresh = () => {
     fetchVideos(page);
+  };
+
+  const handleDelete = async (videoId: string, videoTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡，避免触发视频选择
+    
+    if (!confirm(`确定要删除视频 "${videoTitle || videoId}" 吗？\n\n此操作将删除：\n- 所有任务步骤\n- 视频文件和字幕文件\n- 数据库记录\n\n此操作无法恢复！`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/v1/videos/${videoId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.code === 200) {
+        alert('✅ 删除成功！');
+        // 刷新列表
+        fetchVideos(page);
+      } else {
+        alert(`❌ 删除失败：${data.message}`);
+      }
+    } catch (error) {
+      console.error('删除视频失败:', error);
+      alert('❌ 网络错误，删除失败');
+    }
   };
 
   if (loading) {
@@ -138,7 +165,7 @@ export default function VideoList({ onVideoSelect }: VideoListProps) {
                     )}
                   </div>
                   
-                  {/* 状态和链接 */}
+                  {/* 状态和操作按钮 */}
                   <div className="flex flex-col items-end space-y-2">
                     <StatusBadge status={video.status} />
                     
@@ -153,6 +180,16 @@ export default function VideoList({ onVideoSelect }: VideoListProps) {
                         访问B站
                       </a>
                     )}
+                    
+                    {/* 删除按钮 */}
+                    <button
+                      onClick={(e) => handleDelete(video.video_id, video.generated_title || video.title, e)}
+                      className="flex items-center space-x-1 px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                      title="删除视频"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>删除</span>
+                    </button>
                   </div>
                 </div>
                 
