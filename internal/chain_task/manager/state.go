@@ -23,6 +23,7 @@ type StateManager struct {
 	OutVideoPath    string
 	ImageCover      string
 	OriginalMP3     string
+	OriginalWAV     string // WAV音频文件（用于Whisper）
 	TranslateMP3    string
 	OriginalJSON    string
 	TranslateJSON   string
@@ -60,6 +61,7 @@ func NewStateManager(Id uint, videoID, projectRoot string, createTim time.Time) 
 		CurrentDir:     currentDir,
 		InputVideoPath: filepath.Join(currentDir, videoID+".mp4"),
 		OutVideoPath:   filepath.Join(currentDir, videoID+"out.mp4"),
+		OriginalWAV:    filepath.Join(currentDir, videoID+".wav"),
 		OriginalMP3:    filepath.Join(currentDir, videoID+".mp3"),
 		ImageCover:     filepath.Join(currentDir, "cover.jpg"),
 		OriginalSRT:    filepath.Join(currentDir, "en.srt"),

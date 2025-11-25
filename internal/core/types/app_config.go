@@ -28,6 +28,7 @@ type AppConfig struct {
 	ProxyConfig         *ProxyConfig         `toml:"ProxyConfig"`         // 代理配置
 	AnalyticsConfig     *AnalyticsConfig     `toml:"AnalyticsConfig"`     // 数据分析配置
 	BilibiliConfig      *BilibiliConfig      `toml:"BilibiliConfig"`      // Bilibili上传配置
+	WhisperConfig       *WhisperConfig       `toml:"WhisperConfig"`       // Whisper 语音识别配置
 }
 
 // BilibiliConfig Bilibili上传配置
@@ -171,6 +172,14 @@ type AnalyticsConfig struct {
 	EncryptionKey string `toml:"encryption_key"` // AES加密密钥（可选，16/24/32字节）
 }
 
+// WhisperConfig Whisper 语音识别配置
+type WhisperConfig struct {
+	Enabled   bool   `toml:"enabled"`    // 是否启用 Whisper
+	ModelPath string `toml:"model_path"` // Whisper 模型文件路径
+	Language  string `toml:"language"`   // 识别语言 (en, zh, auto等)
+	Threads   int    `toml:"threads"`    // 使用的线程数
+}
+
 // NewDefaultConfig 创建默认配置
 func NewDefaultConfig() *AppConfig {
 	return &AppConfig{
@@ -259,6 +268,13 @@ func NewDefaultConfig() *AppConfig {
 			UpCloseReply:       0,         // 默认开启评论
 			UpCloseReward:      0,         // 默认开启打赏
 		},
+				// Whisper 配置（默认值，可被 config.toml 覆盖）
+		WhisperConfig: &WhisperConfig{
+			Enabled:   false,
+			ModelPath: "",
+			Language:  "en",
+			Threads:   4,
+		},
 	}
 }
 
@@ -290,6 +306,7 @@ func LoadConfig(configFile string) (*AppConfig, error) {
 		ProxyConfig         *ProxyConfig         `toml:"ProxyConfig"`
 		AnalyticsConfig     *AnalyticsConfig     `toml:"AnalyticsConfig"`
 		BilibiliConfig      *BilibiliConfig      `toml:"BilibiliConfig"`
+		WhisperConfig       *WhisperConfig       `toml:"WhisperConfig"`
 	}
 
 	// 解码TOML配置文件
@@ -324,6 +341,10 @@ func LoadConfig(configFile string) (*AppConfig, error) {
 	if fileConfig.BilibiliConfig != nil {
 		config.BilibiliConfig = fileConfig.BilibiliConfig
 	}
+	if fileConfig.WhisperConfig != nil {
+		config.WhisperConfig = fileConfig.WhisperConfig
+	}
+
 
 	return config, nil
 }
@@ -345,6 +366,7 @@ func SaveConfig(config *AppConfig) error {
 		ProxyConfig         *ProxyConfig         `toml:"ProxyConfig"`
 		AnalyticsConfig     *AnalyticsConfig     `toml:"AnalyticsConfig"`
 		BilibiliConfig      *BilibiliConfig      `toml:"BilibiliConfig"`
+		WhisperConfig       *WhisperConfig       `toml:"WhisperConfig"`
 	}{
 		Listen:              config.Listen,
 		Environment:         config.Environment,
@@ -359,6 +381,7 @@ func SaveConfig(config *AppConfig) error {
 		ProxyConfig:         config.ProxyConfig,
 		AnalyticsConfig:     config.AnalyticsConfig,
 		BilibiliConfig:      config.BilibiliConfig,
+		WhisperConfig:       config.WhisperConfig,
 	}
 
 	buf := new(bytes.Buffer)

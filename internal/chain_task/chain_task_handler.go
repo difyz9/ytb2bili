@@ -189,14 +189,34 @@ func (h *ChainTaskHandler) RunTaskChain(video models2.TbVideo) {
 	stateManager := manager.NewStateManager(video.Id, video.VideoId, currentDir, video.CreatedAt)
 	chain := manager.NewTaskChain()
 
+
 	//// 任务1: 下载视频
-	//downloadTask := handlers.NewDownloadVideo("下载视频", h.App, stateManager, h.App.CosClient)
-	//chain.AddTask(h.wrapTaskWithStepTracking(downloadTask, video.VideoId))
+	downloadTask := handlers.NewDownloadVideo("下载视频", h.App, stateManager, h.App.CosClient, h.SavedVideoService)
+	chain.AddTask(h.wrapTaskWithStepTracking(downloadTask, video.VideoId))
 
 	// 任务2: 生成字幕文件
-	subtitleTask := handlers.NewGenerateSubtitles("生成字幕", h.App, stateManager, h.App.CosClient, h.SavedVideoService)
-	chain.AddTask(h.wrapTaskWithStepTracking(subtitleTask, video.VideoId))
+	extractAudioTask := handlers.NewExtractAudio("分离音频", h.App, stateManager, h.App.CosClient)
+	chain.AddTask(h.wrapTaskWithStepTracking(extractAudioTask, video.VideoId))
 
+	// 任务3: 使用 Whisper 转录生成字幕（如果启用）
+	if h.App.Config.WhisperConfig != nil && h.App.Config.WhisperConfig.Enabled {
+		h.App.Logger.Info("✓ Whisper 已启用，将使用 Whisper 进行语音转录")
+		whisperTask := handlers.NewWhisperHandler(
+			"Whisper转录",
+			h.App,
+			stateManager,
+			h.App.CosClient,
+			h.App.Config.WhisperConfig.ModelPath,
+			h.App.Config.WhisperConfig.Language,
+			h.App.Config.WhisperConfig.Threads,
+		)
+		chain.AddTask(h.wrapTaskWithStepTracking(whisperTask, video.VideoId))
+	} else {
+		// 备用方案：使用原有的字幕生成方法
+		h.App.Logger.Info("使用默认字幕生成方法")
+		subtitleTask := handlers.NewGenerateSubtitles("生成字幕", h.App, stateManager, h.App.CosClient, h.SavedVideoService)
+		chain.AddTask(h.wrapTaskWithStepTracking(subtitleTask, video.VideoId))
+	}
 	chain.AddTask(handlers.NewDownloadImgHandler("下载封面", h.App, stateManager, h.App.CosClient))
 	// 任务3: 翻译字幕（动态检查配置）
 	translateTask := handlers.NewTranslateSubtitle("翻译字幕", h.App, stateManager, h.App.CosClient, h.Db, "")
@@ -293,6 +313,23 @@ func (h *ChainTaskHandler) RunSingleTaskStep(videoID, stepName string) error {
 	switch stepName {
 	case "下载视频":
 		task = handlers.NewDownloadVideo("下载视频", h.App, stateManager, h.App.CosClient, h.SavedVideoService)
+	case "分离音频":
+		task = handlers.NewExtractAudio("分离音频", h.App, stateManager, h.App.CosClient)
+	case "Whisper转录":
+		// 从配置中读取 Whisper 参数
+		if h.App.Config.WhisperConfig != nil && h.App.Config.WhisperConfig.Enabled {
+			task = handlers.NewWhisperHandler(
+				"Whisper转录",
+				h.App,
+				stateManager,
+				h.App.CosClient,
+				h.App.Config.WhisperConfig.ModelPath,
+				h.App.Config.WhisperConfig.Language,
+				h.App.Config.WhisperConfig.Threads,
+			)
+		} else {
+			return fmt.Errorf("Whisper 未启用或配置不完整")
+		}
 	case "生成字幕":
 		task = handlers.NewGenerateSubtitles("生成字幕", h.App, stateManager, h.App.CosClient, h.SavedVideoService)
 	case "翻译字幕":
@@ -347,6 +384,7 @@ func (h *ChainTaskHandler) RunSingleTaskStep(videoID, stepName string) error {
 
 	return nil
 }
+
 
 // wrapTaskWithStepTracking 包装任务以添加步骤跟踪
 func (h *ChainTaskHandler) wrapTaskWithStepTracking(task types.Task, videoID string) types.Task {
