@@ -1,9 +1,9 @@
 # 多阶段构建 Dockerfile
 # Stage 1: 构建Go后端
-FROM golang:1.21-alpine AS backend-builder
+FROM golang:1.24-alpine AS backend-builder
 
-# 安装构建依赖
-RUN apk add --no-cache git ca-certificates tzdata
+# 安装构建依赖（包括 SQLite 所需的 C 库）
+RUN apk add --no-cache git ca-certificates tzdata gcc musl-dev sqlite-dev
 
 WORKDIR /app
 
@@ -14,17 +14,17 @@ RUN go mod download
 # 复制源代码
 COPY . .
 
-# 构建Go应用
+# 构建Go应用（启用 CGO 以支持 SQLite）
 ARG VERSION=dev
 ARG BUILD_TIME
-RUN CGO_ENABLED=0 GOOS=linux go build \
+RUN CGO_ENABLED=1 GOOS=linux go build \
     -ldflags="-s -w -X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME}" \
     -o ytb2bili-server .
 
 # Stage 2: 运行阶段
 FROM alpine:latest
 
-# 安装运行时依赖
+# 安装运行时依赖（包括 SQLite 运行时库）
 RUN apk add --no-cache \
     ca-certificates \
     tzdata \
@@ -32,6 +32,7 @@ RUN apk add --no-cache \
     python3 \
     py3-pip \
     ffmpeg \
+    sqlite-libs \
     && pip3 install --break-system-packages yt-dlp \
     && rm -rf /var/cache/apk/*
 
