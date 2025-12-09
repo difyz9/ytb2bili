@@ -899,7 +899,7 @@ go tool pprof http://localhost:8096/debug/pprof/heap
 
 <div align="center">
 <img src="img/751763091471_.pic.jpg" alt="微信联系二维码" width="200"/>
-<img src="img/131763601078_1208.jpg" alt="微信交流群" width="200"/>
+<img src="img/129001.jpg" alt="微信交流群" width="200"/>
 <br/>
 <em>📱 扫码添加微信 - 技术交流与支持</em>
 </div> 
