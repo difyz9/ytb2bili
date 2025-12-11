@@ -51,16 +51,16 @@ services:
     networks:
       - ytb2bili-network
 
-  # 可选: Nginx 反向代理
-  nginx:
-    image: nginx:alpine
-    container_name: ytb2bili-nginx
+  # 前端 Nginx 服务（独立于后端）
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+      args:
+        BACKEND_URL: http://ytb2bili:8096
+    container_name: ytb2bili-frontend
     ports:
       - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/ssl/certs:ro
     depends_on:
       - ytb2bili
     restart: unless-stopped

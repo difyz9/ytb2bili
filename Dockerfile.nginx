@@ -1,0 +1,42 @@
+# 前端 Nginx 服务 Dockerfile
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/web
+
+# 复制前端依赖文件
+COPY web/package*.json ./
+COPY web/yarn.lock* ./
+
+# 安装前端依赖
+RUN if [ -f yarn.lock ]; then \
+      yarn install --frozen-lockfile; \
+    else \
+      npm ci; \
+    fi
+
+# 复制前端源代码
+COPY web/ ./
+
+# 构建前端（设置后端 URL 环境变量）
+# 使用相对路径，让 nginx 代理转发 API 请求
+ARG BACKEND_URL=http://ytb2bili:8096
+ENV BACKEND_URL=${BACKEND_URL}
+ENV NEXT_PUBLIC_BACKEND_URL=${BACKEND_URL}
+ENV NEXT_PUBLIC_API_URL=/api/v1
+RUN npm run build
+
+# Stage 2: Nginx 运行阶段
+FROM nginx:alpine
+
+# 复制构建好的前端静态文件
+COPY --from=frontend-builder /app/web/output /usr/share/nginx/html
+
+# 复制 nginx 配置文件
+COPY nginx-frontend.conf /etc/nginx/conf.d/default.conf
+
+# 暴露端口
+EXPOSE 80
+
+# 启动 nginx
+CMD ["nginx", "-g", "daemon off;"]
+
