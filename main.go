@@ -1,7 +1,14 @@
 package main
 
 import (
-	"github.com/difyz9/ytb2bili/internal/chain_task"
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/difyz9/ytb2bili/internal/core"
 	"github.com/difyz9/ytb2bili/internal/core/services"
 	"github.com/difyz9/ytb2bili/internal/core/types"
@@ -12,18 +19,11 @@ import (
 	"github.com/difyz9/ytb2bili/pkg/logger"
 	"github.com/difyz9/ytb2bili/pkg/store"
 	"github.com/difyz9/ytb2bili/pkg/utils"
-	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"log"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
-	"time"
 )
 
 // AppLifecycle 应用程序生命周期
@@ -129,19 +129,6 @@ func main() {
 			return checkYtDlpInstallation(logger, config)
 		}),
 
-		fx.Provide(chain_task.NewChainTaskHandler),
-		fx.Invoke(func(h *chain_task.ChainTaskHandler) {
-			// 设置并启动任务消费者（准备阶段：下载、字幕、翻译、元数据）
-			h.SetUp()
-		}),
-
-		// 添加上传调度器
-		fx.Provide(chain_task.NewUploadScheduler),
-		fx.Invoke(func(s *chain_task.UploadScheduler) {
-			// 设置并启动上传调度器（上传阶段：每小时上传视频，1小时后上传字幕）
-			s.SetUp()
-		}),
-
 		// 初始化应用服务器和基础路由
 		fx.Invoke(func(
 			server *core.AppServer,
@@ -149,7 +136,6 @@ func main() {
 			logger *zap.SugaredLogger,
 			savedVideoService *services.SavedVideoService,
 			taskStepService *services.TaskStepService,
-			uploadScheduler *chain_task.UploadScheduler,
 			analyticsMiddleware *analytics.Middleware,
 			analyticsClient *analytics.Client,
 		) {
@@ -163,7 +149,7 @@ func main() {
 			}
 
 			// 注册所有 Handler 路由（包括连接 VideoHandler 和 UploadScheduler）
-			registerHandlers(server, logger, savedVideoService, taskStepService, uploadScheduler, analyticsClient)
+			registerHandlers(server, logger, savedVideoService, taskStepService, analyticsClient)
 
 			// 健康检查
 			server.Engine.GET("/health", func(c *gin.Context) {
@@ -250,7 +236,6 @@ func registerHandlers(
 	logger *zap.SugaredLogger,
 	savedVideoService *services.SavedVideoService,
 	taskStepService *services.TaskStepService,
-	uploadScheduler *chain_task.UploadScheduler,
 	analyticsClient *analytics.Client,
 ) {
 	logger.Info("Registering handlers...")
@@ -283,7 +268,6 @@ func registerHandlers(
 	// 设置分析处理器
 	videoHandler.AnalyticsHandler = analyticsHandler
 	// 设置上传调度器（避免循环依赖）
-	videoHandler.SetUploadScheduler(uploadScheduler)
 	videoHandler.RegisterRoutes(server.Engine.Group("/api/v1"))
 	logger.Info("✓ Video routes registered")
 
