@@ -8,7 +8,7 @@
 
 [server]
 host = "0.0.0.0"           # 服务监听地址，0.0.0.0 表示监听所有网卡
-port = 5688                # 服务端口
+port = 8096                # 服务端口
 static_dir = "./downloads" # 静态文件目录（视频、字幕等）
 static_path = "/static"    # 静态文件访问路径前缀
 
@@ -17,29 +17,18 @@ static_path = "/static"    # 静态文件访问路径前缀
 # 数据库配置
 # ============================================================================
 [database]
-type = "sqlite"             # 数据库类型: sqlite, mysql, postgresql
-path = "ytb2bili.db"        # SQLite 数据库文件路径
-auto_migrate = true         # 是否自动迁移数据库表结构
-table_prefix = ""           # 表名前缀（可选）
+type = "mysql"
+host = "mysql"                 # Docker Compose 服务名
+port = 3306
+user = "ytb2bili"              # 与 docker-compose.yml 一致
+password = "ytb2bili@123"
+dbname = "bili_up"             # 数据库名（注意是 dbname 不是 database）
+sslmode = ""                   # MySQL 不使用（仅 PostgreSQL 需要）
+timezone = "Asia/Shanghai"     # 时区配置
+auto_migrate = true
+table_prefix = ""
 
-# MySQL 配置示例（取消注释并修改以使用 MySQL）
-# type = "mysql"
-# host = "127.0.0.1"
-# port = 3306
-# user = "root"
-# password = "your_password"
-# dbname = "ytb2ibili"
-# timezone = "Asia/Shanghai"
 
-# PostgreSQL 配置示例（取消注释并修改以使用 PostgreSQL）
-# type = "postgresql"
-# host = "127.0.0.1"
-# port = 5432
-# user = "postgres"
-# password = "your_password"
-# dbname = "ytb2bili"
-# sslmode = "disable"
-# timezone = "UTC"
 
 # ============================================================================
 # 视频处理工作流配置
@@ -51,8 +40,9 @@ download_dir = "./downloads"  # 视频下载目录（必需，应与 server.stat
 ytdlp_path = "/usr/local/bin/yt-dlp"
 
 # ffmpeg 可执行文件路径（可选，默认从 PATH 查找）
-ffmpeg_path = "/usr/local/bin/ffmpeg"
-
+ffmpeg_path = "/usr/bin/ffmpeg"
+# Cookies 文件路径（可选，用于下载受限视频）
+# cookies_file = "/path/to/cookies.txt"
 
 # 代理地址（可选，用于加速下载）
 # proxy_url = "http://127.0.0.1:7890"
@@ -62,7 +52,7 @@ ffmpeg_path = "/usr/local/bin/ffmpeg"
 # speech_region = "eastasia"
 
 # LLM 翻译配置
-llm_translation_enabled = false      # 是否启用 LLM 批量翻译（推荐，替代微软翻译）
+llm_translation_enabled = true      # 是否启用 LLM 批量翻译（推荐，替代微软翻译）
 llm_translation_batch_size = 25      # 批量翻译每批句子数
 llm_translation_max_workers = 3      # 并发工作者数量
 llm_translation_context_size = 2     # 上下文窗口大小
@@ -79,9 +69,9 @@ tts_enabled = false  # 是否启用字幕音频合成
 name = "ytb2bili_agent"  # Agent 名称
 
 [agent.llm]
-provider = "openai"                      # LLM 提供商: openai, deepseek, openrouter 等
-api_key = "your_api_key_here"            # LLM API 密钥（必需）
-model = "gpt-4"                          # 使用的模型名称
+# provider = "openai"                      # LLM 提供商: openai, deepseek, openrouter 等
+# api_key = "sk-proj--"            # LLM API 密钥（必需）
+# model = "gpt-4"                          # 使用的模型名称
 # base_url = "https://api.openai.com/v1"  # 自定义 API 地址（可选）
 
 # OpenRouter 示例
@@ -91,24 +81,10 @@ model = "gpt-4"                          # 使用的模型名称
 # model = "anthropic/claude-3-sonnet"
 
 # DeepSeek 示例
-# provider = "deepseek"
-# api_key = "sk-..."
-# base_url = "https://api.deepseek.com/v1"
-# model = "deepseek-chat"
-
-
-
-# Google Gemini 示例（base_url 可省略，程序自动设置 OpenAI 兼容端点）
-# provider = "gemini"
-# api_key = "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-# model = "gemini-2.0-flash"   # 可选: gemini-2.0-flash, gemini-1.5-pro, gemini-2.0-flash-thinking-exp
-# base_url = "https://generativelanguage.googleapis.com/v1beta/openai"  # 可省略，程序自动填充
-
-
-
-
-
-
+provider = "deepseek"
+api_key = "sk"
+base_url = "https://api.deepseek.com/v1"
+model = "deepseek-chat"
 
 # ============================================================================
 # 自动更新配置
@@ -139,3 +115,4 @@ enabled = false  # 是否启用腾讯云 COS 存储
 # cos_region = "ap-guangzhou"
 # cos_bucket = "your-bucket-name"
 # sub_app_id = "your_app_id"
+

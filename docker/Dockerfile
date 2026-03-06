@@ -1,24 +1,28 @@
-FROM difyz9/ytb2bili-base:latest
+FROM difyz9/ytb2bili-base
 
 LABEL maintainer="difyz9" \
-      image="difyz9/ytb2bili"
+      image="difyz9/ytb2bili" \
+      version="v0.0.19"
+
+# Docker 自动设置目标架构 (amd64 / arm64)
+ARG TARGETARCH
+ARG VERSION=v0.0.19
 
 WORKDIR /app
 
-# 注入 Asia/Shanghai 时区文件（无需 apt-get tzdata）
-RUN mkdir -p /usr/share/zoneinfo/Asia
-COPY Shanghai.zone /usr/share/zoneinfo/Asia/Shanghai
-RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && echo "Asia/Shanghai" > /etc/timezone
-
-# 复制 amd64 可执行文件和配置文件
-COPY ytb2bili-linux-amd64 ./ytb2bili
-COPY config.toml ./config.toml
-
-# 创建数据目录并赋予执行权限
-RUN mkdir -p ./data ./media ./backend \
+# 从 GitHub Releases 下载对应架构的压缩包并解压
+RUN ARCHIVE="ytb2bili-linux-${TARGETARCH}.tar.gz" \
+    && URL="https://github.com/difyz9/ytb2bili/releases/download/${VERSION}/${ARCHIVE}" \
+    && echo "Downloading ${URL}" \
+    && curl -fsSL "${URL}" -o "/tmp/${ARCHIVE}" \
+    && tar -xzf "/tmp/${ARCHIVE}" -C /tmp \
+    && mv "/tmp/ytb2bili-linux-${TARGETARCH}/ytb2bili-linux-${TARGETARCH}" ./ytb2bili \
+    && rm -rf "/tmp/${ARCHIVE}" "/tmp/ytb2bili-linux-${TARGETARCH}" \
     && chmod +x ./ytb2bili
 
-EXPOSE 5688
+# 创建数据目录
+RUN mkdir -p ./logs ./downloads
+
+EXPOSE 8096
 
 CMD ["./ytb2bili"]
