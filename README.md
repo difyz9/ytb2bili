@@ -9,6 +9,9 @@
 - `mysql`：持久化任务、账号和运行数据
 - `ytb2bili`：Web 管理后台和搬运服务
 
+## 视频教程： 
+https://www.bilibili.com/video/BV1tCRTBBEJo
+
 ### 1. 准备环境
 
 先确认机器上已经安装：
