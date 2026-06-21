@@ -1,0 +1,369 @@
+{
+  "currency": "CNY",
+  "locale": "zh-CN",
+  "page": {
+    "backLinkText": "返回工作台",
+    "emptyState": {
+      "title": "暂无可购买的套餐",
+      "description": "我们正在准备新的会员方案，请稍后回来查看。"
+    },
+    "statusLabels": {
+      "current": "当前方案",
+      "recommend": "推荐升级",
+      "higher": "更高档位",
+      "covered": "已覆盖"
+    },
+    "stats": {
+      "duration": "有效期",
+      "credits": "赠送积分",
+      "models": "可用模型"
+    },
+    "sections": {
+      "features": "核心权益",
+      "models": "解锁模型"
+    },
+    "messages": {
+      "defaultFeature": "包含当前等级的所有基础功能。",
+      "loadingModels": "正在同步模型列表...",
+      "noModels": "当前套餐暂未指定专属模型。",
+      "moreModels": "及另外 {count} 个可用模型",
+      "currentPlan": "您当前正在使用此套餐",
+      "currentFreeHint": "免费版保留少量体验额度，适合首次试用。",
+      "confirmOpen": "确认开通 {name}",
+      "paymentHint": "选择下方支付方式完成付款",
+      "payNow": "实付",
+      "confirmPay": "确认支付 · ¥{price}",
+      "processing": "正在创建订单..."
+    },
+    "paymentOptions": [
+      {
+        "id": "wechat",
+        "label": "微信支付"
+      },
+      {
+        "id": "alipay",
+        "label": "支付宝"
+      }
+    ],
+    "benefits": [
+      {
+        "icon": "shield",
+        "title": "安全支付",
+        "description": "官方合作渠道，支付过程安全可靠。"
+      },
+      {
+        "icon": "crown",
+        "title": "权益即时生效",
+        "description": "支付成功后，会员权益和积分立即到账。"
+      },
+      {
+        "icon": "sparkles",
+        "title": "商业授权",
+        "description": "所有付费套餐均包含商业使用授权。"
+      }
+    ]
+  },
+  "plans": [
+    {
+      "id": "vip_7d",
+      "key": "7d",
+      "name": "7天会员",
+      "tier": "basic",
+      "description": "开放更强的对话推理能力。",
+      "durationDays": 7,
+      "billingCycle": "one_time",
+      "price": 0.1,
+      "originalPrice": 12.9,
+      "credits": 1500,
+      "quota": {
+        "dailyUploadLimit": 10,
+        "maxConcurrentTasks": 2,
+        "features": ["auto_upload"]
+      },
+      "discount": {
+        "type": "percent",
+        "value": 23,
+        "label": "限时 23% OFF"
+      },
+      "features": [
+        "每日上传 2 个视频",
+        "基础专属标识"
+      ],
+      "modelKeys": [
+        "gpt-4o-mini",
+        "claude-3-5-haiku-20241022"
+      ],
+      "models": [
+        {
+          "id": "gpt-4o-mini",
+          "key": "gpt-4o-mini",
+          "name": "GPT-4o Mini",
+          "modelId": "gpt-4o-mini",
+          "provider": "OpenAI",
+          "minTier": "free",
+          "description": "适合日常问答和轻量任务"
+        },
+        {
+          "id": "claude-3-5-haiku-20241022",
+          "key": "claude-3-5-haiku-20241022",
+          "name": "Claude 3.5 Haiku",
+          "modelId": "claude-3-5-haiku-20241022",
+          "provider": "Anthropic",
+          "minTier": "basic",
+          "description": "速度快、成本低，适合高频对话。"
+        }
+      ],
+      "badges": [],
+      "isDefault": false,
+      "isRecommended": false,
+      "sort": 10,
+      "ctaText": "立即开通"
+    },
+    {
+      "id": "vip_month",
+      "key": "monthly",
+      "name": "月度会员",
+      "tier": "pro",
+      "description": "适合高质量内容生成和复杂任务。",
+      "durationDays": 30,
+      "billingCycle": "monthly",
+      "price": 29.0,
+      "originalPrice": 39.0,
+      "credits": 3500,
+      "quota": {
+        "dailyUploadLimit": 50,
+        "maxConcurrentTasks": 5,
+        "features": ["auto_upload", "metadata_generation", "priority_support"]
+      },
+      "discount": {
+        "type": "amount",
+        "value": 10.0,
+        "label": "立省 ¥10"
+      },
+      "features": [
+        "每日上传 5 个视频",
+        "AI 元数据生成",
+        "专属标识 + 昵称样式",
+        "优先客服支持"
+      ],
+      "modelKeys": [
+        "gpt-4o-mini",
+        "claude-3-5-haiku-20241022",
+        "gemini-3.1-flash-image-preview",
+        "gpt-4o"
+      ],
+      "models": [
+        {
+          "id": "gpt-4o-mini",
+          "key": "gpt-4o-mini",
+          "name": "GPT-4o Mini",
+          "modelId": "gpt-4o-mini",
+          "provider": "OpenAI",
+          "minTier": "free",
+          "description": "适合日常问答和轻量任务"
+        },
+        {
+          "id": "claude-3-5-haiku-20241022",
+          "key": "claude-3-5-haiku-20241022",
+          "name": "Claude 3.5 Haiku",
+          "modelId": "claude-3-5-haiku-20241022",
+          "provider": "Anthropic",
+          "minTier": "basic",
+          "description": "速度快、成本低，适合高频对话。"
+        },
+        {
+          "id": "gemini-3.1-flash-image-preview",
+          "key": "gemini-3.1-flash-image-preview",
+          "name": "Gemini 3.1 Flash",
+          "modelId": "gemini-3.1-flash-image-preview",
+          "provider": "Google",
+          "minTier": "standard",
+          "description": "多模态理解更强，适合图文混合任务。"
+        },
+        {
+          "id": "gpt-4o",
+          "key": "gpt-4o",
+          "name": "GPT-4o",
+          "modelId": "gpt-4o",
+          "provider": "OpenAI",
+          "minTier": "pro",
+          "description": "综合能力强，适合高质量生成与复杂问答。"
+        }
+      ],
+      "badges": [],
+      "isDefault": true,
+      "isRecommended": false,
+      "sort": 20,
+      "ctaText": "立即开通"
+    },
+    {
+      "id": "vip_quarter",
+      "key": "quarterly",
+      "name": "季度会员",
+      "tier": "pro",
+      "description": "适合高质量内容生成和复杂任务。",
+      "durationDays": 90,
+      "billingCycle": "quarterly",
+      "price": 0.2,
+      "originalPrice": 99.0,
+      "credits": 7000,
+      "quota": {
+        "dailyUploadLimit": 50,
+        "maxConcurrentTasks": 5,
+        "features": ["auto_upload", "metadata_generation", "subtitle_translation", "priority_support"]
+      },
+      "discount": {
+        "type": "percent",
+        "value": 20,
+        "label": "最划算：省 20%"
+      },
+      "features": [
+        "每日上传 10 个视频",
+        "AI 字幕翻译",
+        "AI 元数据生成",
+        "专属标识 + 昵称样式",
+        "优先客服支持",
+        "季度专属活动资格"
+      ],
+      "modelKeys": [
+        "gpt-4o-mini",
+        "claude-3-5-haiku-20241022",
+        "gemini-3.1-flash-image-preview",
+        "gpt-4o"
+      ],
+      "models": [
+        {
+          "id": "gpt-4o-mini",
+          "key": "gpt-4o-mini",
+          "name": "GPT-4o Mini",
+          "modelId": "gpt-4o-mini",
+          "provider": "OpenAI",
+          "minTier": "free",
+          "description": "适合日常问答和轻量任务"
+        },
+        {
+          "id": "claude-3-5-haiku-20241022",
+          "key": "claude-3-5-haiku-20241022",
+          "name": "Claude 3.5 Haiku",
+          "modelId": "claude-3-5-haiku-20241022",
+          "provider": "Anthropic",
+          "minTier": "basic",
+          "description": "速度快、成本低，适合高频对话。"
+        },
+        {
+          "id": "gemini-3.1-flash-image-preview",
+          "key": "gemini-3.1-flash-image-preview",
+          "name": "Gemini 3.1 Flash",
+          "modelId": "gemini-3.1-flash-image-preview",
+          "provider": "Google",
+          "minTier": "standard",
+          "description": "多模态理解更强，适合图文混合任务。"
+        },
+        {
+          "id": "gpt-4o",
+          "key": "gpt-4o",
+          "name": "GPT-4o",
+          "modelId": "gpt-4o",
+          "provider": "OpenAI",
+          "minTier": "pro",
+          "description": "综合能力强，适合高质量生成与复杂问答。"
+        }
+      ],
+      "badges": ["HOT"],
+      "isDefault": false,
+      "isRecommended": true,
+      "sort": 30,
+      "ctaText": "推荐开通"
+    },
+    {
+      "id": "vip_year",
+      "key": "yearly",
+      "name": "年度会员",
+      "tier": "enterprise",
+      "description": "解锁完整模型能力和更高性能。",
+      "durationDays": 365,
+      "billingCycle": "yearly",
+      "price": 259.0,
+      "originalPrice": 399.0,
+      "credits": 12000,
+      "quota": {
+        "dailyUploadLimit": 0,
+        "maxConcurrentTasks": 10,
+        "features": ["auto_upload", "metadata_generation", "subtitle_translation", "custom_templates", "priority_support"]
+      },
+      "discount": {
+        "type": "percent",
+        "value": 35,
+        "label": "年度特惠 35% OFF"
+      },
+      "features": [
+        "无限制上传视频",
+        "AI 字幕翻译",
+        "AI 元数据生成",
+        "自定义模板",
+        "专属标识 + 昵称样式",
+        "优先客服支持",
+        "年度礼包（如有）"
+      ],
+      "modelKeys": [
+        "gpt-4o-mini",
+        "claude-3-5-haiku-20241022",
+        "gemini-3.1-flash-image-preview",
+        "gpt-4o",
+        "claude-3-opus-20240229"
+      ],
+      "models": [
+        {
+          "id": "gpt-4o-mini",
+          "key": "gpt-4o-mini",
+          "name": "GPT-4o Mini",
+          "modelId": "gpt-4o-mini",
+          "provider": "OpenAI",
+          "minTier": "free",
+          "description": "适合日常问答和轻量任务"
+        },
+        {
+          "id": "claude-3-5-haiku-20241022",
+          "key": "claude-3-5-haiku-20241022",
+          "name": "Claude 3.5 Haiku",
+          "modelId": "claude-3-5-haiku-20241022",
+          "provider": "Anthropic",
+          "minTier": "basic",
+          "description": "速度快、成本低，适合高频对话。"
+        },
+        {
+          "id": "gemini-3.1-flash-image-preview",
+          "key": "gemini-3.1-flash-image-preview",
+          "name": "Gemini 3.1 Flash",
+          "modelId": "gemini-3.1-flash-image-preview",
+          "provider": "Google",
+          "minTier": "standard",
+          "description": "多模态理解更强，适合图文混合任务。"
+        },
+        {
+          "id": "gpt-4o",
+          "key": "gpt-4o",
+          "name": "GPT-4o",
+          "modelId": "gpt-4o",
+          "provider": "OpenAI",
+          "minTier": "pro",
+          "description": "综合能力强，适合高质量生成与复杂问答。"
+        },
+        {
+          "id": "claude-3-opus-20240229",
+          "key": "claude-3-opus-20240229",
+          "name": "Claude 3 Opus",
+          "modelId": "claude-3-opus-20240229",
+          "provider": "Anthropic",
+          "minTier": "enterprise",
+          "description": "复杂推理与长文档处理能力最强。"
+        }
+      ],
+      "badges": ["BEST"],
+      "isDefault": false,
+      "isRecommended": false,
+      "sort": 40,
+      "ctaText": "立即开通"
+    }
+  ]
+}

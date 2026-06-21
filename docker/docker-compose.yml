@@ -3,15 +3,16 @@ services:
     image: mysql:8.0
     container_name: ytb2bili-mysql
     restart: unless-stopped
+    command: --default-time-zone=+08:00
     environment:
       MYSQL_ROOT_PASSWORD: your_password
       MYSQL_DATABASE: bili_up
       MYSQL_USER: ytb2bili
       MYSQL_PASSWORD: ytb2bili@123
     volumes:
-      - ./mysql_data:/var/lib/mysql
+      - ./data:/var/lib/mysql
     ports:
-      - "3309:3306"
+      - "3308:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pyour_password"]
       interval: 10s
@@ -20,23 +21,28 @@ services:
       start_period: 30s
 
   ytb2bili:
-    image: difyz9/ytb2bili:latest   # 直接使用 Docker Hub 预构建镜像
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      pull: false
+      args:
+        APP_BINARY: ${APP_BINARY:-ytb2bili-linux-arm64}
     container_name: ytb2bili-app
     restart: unless-stopped
+    stop_grace_period: 30s
     depends_on:
       mysql:
         condition: service_healthy
     ports:
       - "8096:8096"
     volumes:
+      - ./${APP_BINARY:-ytb2bili-linux-arm64}:/app/ytb2bili:ro
       - ./config.toml:/app/config.toml
-      - ./logs:/app/do
       - ./downloads:/app/downloads
+      - ./cookies:/tmp/cookies
     environment:
       - TZ=Asia/Shanghai
+      - SERVICE_SECRET=${SERVICE_SECRET:-}
 
 
-
-
-# docker compose down
-# docker volume rm ytb2bili_mysql_data

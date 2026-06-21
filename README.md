@@ -1,207 +1,93 @@
 # ytb2bili
 
-[简体中文](README.zh-CN.md) | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+<p align="center">
+	<img src="web/public/logo.png" alt="ytb2bili logo" width="640" />
+</p>
 
-`ytb2bili` is a workflow system for local video translation playback and YouTube-to-Bilibili publishing. It includes a web admin panel, task-chain orchestration, subtitle processing, AI copy generation, subtitle audio synthesis, synchronized A/V preview, Bilibili upload, and subtitle upload.
+<p align="center">
+	<a href="https://github.com/difyz9/ytb2bili/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/difyz9/ytb2bili?display_name=tag" /></a>
+	<a href="https://github.com/difyz9/ytb2bili/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/difyz9/ytb2bili?style=social" /></a>
+	<a href="https://github.com/difyz9/ytb2bili/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/difyz9/ytb2bili" /></a>
+	<a href="https://github.com/difyz9/ytb2bili/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/difyz9/ytb2bili" /></a>
+</p>
 
-Video tutorial: https://www.bilibili.com/video/BV1tCRTBBEJo
+Language: [English](README.en.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-## Key Features
+ytb2bili is a video workflow system for local video translation playback and YouTube-to-Bilibili publishing. It combines a Go backend, a Next.js web console, subtitle processing, AI copy generation, subtitle voice synthesis, synchronized audio/video playback, and Bilibili upload automation.
 
-- Local video translation playback with translated subtitles and dubbed audio
-- End-to-end YouTube to Bilibili workflow: download, audio extraction, transcription, translation, metadata generation, and upload
-- Configurable task chain with step-level enable or disable control
-- AI integrations for translation, title, description, tag generation, and dubbed audio synthesis
-- Bilibili integration with QR-code login, video submission, subtitle upload, and account management
-- Modern web admin built with Go and Next.js
+## Overview
 
-## 5-Minute Docker Deployment
+- Local video translation and review with subtitles, voiceover, and synchronized playback.
+- End-to-end YouTube to Bilibili workflow: download, transcription, translation, metadata generation, upload, and subtitle upload.
+- Task-based pipeline with configurable steps for downloading, audio extraction, transcription, translation, and publishing.
+- Web console for task tracking, account linking, settings, retries, manual uploads, and assistant-driven operations.
 
-Docker Compose is the fastest way to get started. By default, it launches two services:
+## Read The Full README
 
-- `mysql`: stores tasks, accounts, and runtime data
-- `ytb2bili`: web admin panel and processing service
+- [English README](README.en.md)
+- [简体中文 README](README.zh-CN.md)
+- [日本語 README](README.ja.md)
+- [한국어 README](README.ko.md)
 
-### 1. Prerequisites
+## Quick Links
 
-- Docker
-- Docker Compose
+- [Documentation Index](docs/INDEX.md)
+- [Configuration Example](config.toml.example)
+- [Docker Test/Deployment Notes](docker/README.md)
+- [Docker Development Guide](README.docker.md)
+- [Project Guide](PROJECT_GUIDE.md)
 
-### 2. Get Deployment Files
+## Community
 
-```bash
-git clone https://github.com/difyz9/ytb2bili-docker.git
-cd ytb2bili-docker
-docker compose up -d
-```
+If you want updates, troubleshooting help, or product discussion, you can reach out through the GitHub repository or scan the community QR codes below.
 
-### 3. Minimal Configuration
+<p>
+	<img src="img/220421_706.png" alt="QQ group QR code" width="280" />
+	<img src="img/751763091471.jpg" alt="WeChat contact QR code" width="280" />
+</p>
 
-The default `[database]` section already matches `docker-compose.yml`. Keep at least the following:
+## Repository Layout
 
-```toml
-[server]
-host = "0.0.0.0"
-port = 8096
-static_dir = "./downloads"
-static_path = "/static"
-
-[database]
-type = "mysql"
-host = "mysql"
-port = 3306
-user = "ytb2bili"
-password = "ytb2bili@123"
-dbname = "bili_up"
-sslmode = ""
-timezone = "Asia/Shanghai"
-auto_migrate = true
-table_prefix = ""
-
-[workflow]
-download_dir = "./downloads"
-ytdlp_path = "/usr/local/bin/yt-dlp"
-ffmpeg_path = "/usr/bin/ffmpeg"
-
-# Add this if your network requires a proxy for YouTube:
-# proxy_url = "http://127.0.0.1:7890"
-```
-
-### 4. Start the Services
-
-```bash
-docker compose up -d
-docker compose logs -f
-```
-
-Then open `http://localhost:8096`
-
-### 5. Basic Usage
-
-1. Open the admin panel
-2. Sign in with the Bilibili app QR code
-3. Create a task and paste the video link
-4. Wait for download, processing, and upload to finish
-
-Useful commands:
-
-```bash
-docker compose ps
-docker compose restart
-docker compose down
-```
-
-For Docker-specific details, see [docker/README.md](docker/README.md).
-
-## Architecture
-
-The project has three main parts:
-
-- Processing engine: Go backend for download, transcription, translation, metadata generation, audio synthesis, Bilibili upload, and subtitle upload
-- Admin panel: Next.js frontend for task management, configuration, account management, manual uploads, and synchronized translation playback review
-- Runtime support: `config.toml`, database, Docker assets, and project documentation
-
-## Repository Structure
-
-- `internal/`: backend application code, task chain, processing logic, and service wiring
-- `pkg/`: reusable packages, Bilibili integration, utilities, and models
-- `web/`: frontend web admin panel
-- `docker/`: Docker build and deployment files
-- `bin/`: example scripts, test helpers, and workflow files
+- `internal/`: backend application code, handlers, workflows, storage, and bootstrap logic.
+- `pkg/`: reusable packages such as LLM integrations, tools, and shared models.
+- `web/`: Next.js frontend for the management console.
+- `configs/`: configuration examples and related notes.
+- `docs/`: deployment, feature, architecture, and troubleshooting documentation.
+- `docker/`: container build and runtime files.
 
 ## Local Development
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/difyz9/ytb2bili.git
-cd ytb2bili
-```
-
-### 2. Prepare Configuration
-
 ```bash
 cp config.toml.example config.toml
-```
-
-Fill in database settings, download directory, API keys, proxy settings, and other required options. Start with [config.toml.example](config.toml.example).
-
-### 3. Start the Backend
-
-```bash
-go mod download
 go run main.go
-```
 
-### 4. Start the Frontend
-
-```bash
 cd web
 npm install
 npm run dev
 ```
 
-### 5. Workflow
+Default local URLs:
 
-1. Open the web admin panel
-2. Log in to a Bilibili account
-3. Upload a local video to generate translated subtitles and dubbed audio, then review them in synchronized playback
-4. Install the Chrome extension: https://api.github.com/repos/difyz9/ytb2bili_extension/releases/latest
-5. Open any YouTube video page and submit the link through the extension
-6. Check task status and logs in the admin panel
-7. Rerun steps, edit copy, or manually submit to Bilibili when needed
+- Backend: `http://localhost:8096`
+- Frontend: `http://localhost:3000`
 
-## Processing Flow
-
-1. Import a local video or submit a YouTube link
-2. Download the video and thumbnail
-3. Extract audio
-4. Generate subtitles
-5. Translate subtitles
-6. Synthesize dubbed audio and preview with synchronized playback
-7. Generate title, description, and tags
-8. Upload the video to Bilibili
-9. Upload subtitles to Bilibili
-
-## Configuration and Build
-
-The main runtime configuration file is `config.toml`:
-
-```bash
-cp config.toml.example config.toml
-```
-
-Common options include:
-
-- `server.port`: service port
-- `database.*`: database connection settings
-- `workflow.*`: download directory, proxy, ffmpeg, yt-dlp, and workflow options
-- `api2key.*`: unified backend capabilities for AI, credits, translation, and TTS
-- `updater.enabled`: auto-update switch
-
-Build commands:
+## Build
 
 ```bash
 make build
-make build-dev
-make build-linux-arm64
-make build-all
+make build-linux-amd64
+make test
 ```
 
-If you need to extend the pipeline, start with the implementations under `internal/chain_task/`.
+## License
 
-## Validation Commands
+[MIT License](LICENSE)
 
-```bash
-go test ./...
-go build -o ytb2bili main.go
-curl http://localhost:8096/health
-```
+## Contributing
 
-## License and Contact
+Issues and pull requests are welcome.
 
-- License: [MIT License](LICENSE)
+## Contact
+
 - GitHub: [@difyz9](https://github.com/difyz9)
-- Project: [https://github.com/difyz9/ytb2bili](https://github.com/difyz9/ytb2bili)
-- QQ group: 773066052
-
+- Repository: [https://github.com/difyz9/ytb2bili](https://github.com/difyz9/ytb2bili)

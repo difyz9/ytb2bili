@@ -1,0 +1,188 @@
+.PHONY: tidy test vet run dev build build-prod build-dev clean web-install web-dev web-export build-linux-amd64 build-linux-arm64 build-all build-release
+
+# 版本号（从 git tag 获取，或使用默认值）
+ifeq ($(OS),Windows_NT)
+VERSION := $(strip $(shell git describe --tags --always --dirty 2>NUL))
+else
+VERSION := $(strip $(shell git describe --tags --always --dirty 2>/dev/null))
+endif
+
+ifeq ($(VERSION),)
+VERSION := 1.0.0
+endif
+
+LDFLAGS := -ldflags=-X=github.com/zolagz/ytb2bili/internal/updater.Version=$(VERSION)
+BINARY_NAME := ytb2bili
+
+ifeq ($(OS),Windows_NT)
+GO_BUILD_WITH_ENV = set "GOOS=$(1)" && set "GOARCH=$(2)" && go build $(LDFLAGS) -o $(3) main.go
+else
+GO_BUILD_WITH_ENV = GOOS=$(1) GOARCH=$(2) go build $(LDFLAGS) -o $(3) main.go
+endif
+
+# ==============================================
+# 基础命令
+# ==============================================
+
+tidy:
+	go mod tidy
+
+test:
+	go test ./...
+
+vet:
+	go vet ./...
+
+# 开发模式运行（后端）
+dev:
+	@echo "Starting backend dev server..."
+	go run main.go
+
+# ==============================================
+# 前端命令
+# ==============================================
+
+# 安装前端依赖
+web-install:
+	@echo "Installing web dependencies..."
+	cd web && npm install
+
+# 前端开发模式（需要单独运行，配合后端使用代理）
+web-dev:
+	@echo "Starting web dev server..."
+	cd web && npm run dev
+
+# 构建前端静态文件（静态导出模式）
+web-export:
+	@echo "Building web static export..."
+	cd web && npm run build
+	@echo "Web static files exported to internal/server/out/"
+
+# ==============================================
+# 生产构建（默认：包含前端）
+# ==============================================
+
+# 主构建命令：一体化构建（前端 + 后端）
+build: web-export
+	@echo "Building production binary with web assets..."
+	go build $(LDFLAGS) -o $(BINARY_NAME) main.go
+	@echo "Build complete: ./$(BINARY_NAME)"
+	@echo "Run with: ./$(BINARY_NAME)"
+
+# 仅构建后端（不包含前端，用于开发）
+build-dev:
+	@echo "Building backend only..."
+	go build $(LDFLAGS) -o $(BINARY_NAME) main.go
+	@echo "Backend build complete: ./$(BINARY_NAME)"
+
+# 生产构建（显式命名）
+build-prod: build
+
+# ==============================================
+# 清理
+# ==============================================
+
+clean:
+	@echo "Cleaning build artifacts..."
+	rm -rf web/out web/.next web/.firebase
+	rm -f $(BINARY_NAME)
+	rm -rf bin/
+	@echo "Clean complete"
+
+# ==============================================
+# 快速启动
+# ==============================================
+
+# 开发环境：运行后端（前端需另开终端运行 make web-dev）
+run: build-dev
+	@echo "Starting backend service..."
+	./$(BINARY_NAME)
+
+# ==============================================
+# 多平台构建
+# ==============================================
+
+build-linux-amd64: web-export
+	@echo "Building Linux AMD64..."
+	$(call GO_BUILD_WITH_ENV,linux,amd64,docker/ytb2bili-linux-amd64)
+	@echo "Built: docker/ytb2bili-linux-amd64"
+
+build-linux-arm64: web-export
+	@echo "Building Linux ARM64..."
+	$(call GO_BUILD_WITH_ENV,linux,arm64,docker/ytb2bili-linux-arm64)
+	@echo "Built: docker/ytb2bili-linux-arm64"
+
+build-darwin-amd64: web-export
+	@echo "Building macOS AMD64..."
+	$(call GO_BUILD_WITH_ENV,darwin,amd64,bin/ytb2bili-darwin-amd64)
+	@echo "Built: bin/ytb2bili-darwin-amd64"
+
+build-darwin-arm64: web-export
+	@echo "Building macOS ARM64..."
+	$(call GO_BUILD_WITH_ENV,darwin,arm64,bin/ytb2bili-darwin-arm64)
+	@echo "Built: bin/ytb2bili-darwin-arm64"
+
+build-windows-amd64: web-export
+	@echo "Building Windows AMD64..."
+	$(call GO_BUILD_WITH_ENV,windows,amd64,bin/ytb2bili-windows-amd64.exe)
+	@echo "Built: bin/ytb2bili-windows-amd64.exe"
+
+build-all: build-linux-amd64 build-linux-arm64 build-darwin-amd64 build-darwin-arm64 build-windows-amd64
+	@echo ""
+	@echo "All platform builds complete (version: $(VERSION))"
+	@echo ""
+	@ls -lh bin/
+
+# ==============================================
+# GitHub Release
+# ==============================================
+
+# 构建并创建 GitHub Release（需要 gh CLI）
+build-release: build-all
+	@echo "Creating GitHub Release $(VERSION)..."
+	@gh release create $(VERSION) bin/* \
+		--title "Release $(VERSION)" \
+		--notes "Auto-generated release for version $(VERSION)" \
+		--draft
+	@echo "Draft release created. Review and publish it on GitHub."
+
+# ==============================================
+# 帮助信息
+# ==============================================
+
+help:
+	@echo "Available commands:"
+	@echo ""
+	@echo "Development:"
+	@echo "  make dev          - Start backend dev server"
+	@echo "  make web-dev      - Start web dev server"
+	@echo "  make web-install  - Install web dependencies"
+	@echo ""
+	@echo "Build:"
+	@echo "  make build        - Build production binary with web assets"
+	@echo "  make build-dev    - Build backend only"
+	@echo "  make build-all    - Build all target platforms"
+	@echo ""
+	@echo "Cleanup:"
+	@echo "  make clean        - Remove build artifacts"
+	@echo ""
+	@echo "Checks:"
+	@echo "  make test         - Run tests"
+	@echo "  make vet          - Run go vet"
+	@echo "  make tidy         - Run go mod tidy"
+	@echo ""
+	@echo "Multi-platform builds:"
+	@echo "  make build-linux-amd64    - Linux AMD64"
+	@echo "  make build-linux-arm64    - Linux ARM64"
+	@echo "  make build-darwin-amd64   - macOS AMD64"
+	@echo "  make build-darwin-arm64   - macOS ARM64"
+	@echo "  make build-windows-amd64  - Windows AMD64"
+	@echo ""
+	@echo "Quick start:"
+	@echo "  Development:"
+	@echo "    terminal 1: make dev"
+	@echo "    terminal 2: make web-dev"
+	@echo ""
+	@echo "  Production:"
+	@echo "    make build"
+	@echo "    ./ytb2bili"

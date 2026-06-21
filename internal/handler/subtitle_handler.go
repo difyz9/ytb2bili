@@ -1,10 +1,6 @@
 package handler
 
 import (
-	"github.com/difyz9/ytb2bili/internal/core"
-	"github.com/difyz9/ytb2bili/pkg/auth"
-	"github.com/difyz9/ytb2bili/pkg/store/model"
-	"github.com/difyz9/ytb2bili/pkg/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,19 +10,29 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"github.com/zolagz/ytb2bili/internal/config"
+	"github.com/zolagz/ytb2bili/internal/analytics"
+	"github.com/zolagz/ytb2bili/pkg/store/model"
+	"github.com/zolagz/ytb2bili/pkg/utils"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type SubtitleHandler struct {
-	BaseHandler
+	DB        *gorm.DB
+	logger    *zap.Logger
+	analytics *analytics.Client
+	cfg       *config.AppConfig
+
 }
 
-func NewSubtitleHandler(app *core.AppServer) *SubtitleHandler {
-
+func NewSubtitleHandler(db *gorm.DB, logger *zap.Logger, analyticsClient *analytics.Client, cfg *config.AppConfig) *SubtitleHandler {
 	return &SubtitleHandler{
-		BaseHandler: BaseHandler{App: app},
+		DB:        db,
+		logger:    logger,
+		analytics: analyticsClient,
+		cfg:       cfg,
 	}
 }
 
@@ -34,30 +40,26 @@ func NewSubtitleHandler(app *core.AppServer) *SubtitleHandler {
 type SaveVideoRequest struct {
 	URL           string                     `json:"url" binding:"required"`
 	Title         string                     `json:"title"`
+	Meta          string                     `json:"meta"`
 	Description   string                     `json:"description"`
 	OperationType string                     `json:"operationType"`
 	Subtitles     []model.SavedVideoSubtitle `json:"subtitles"`
 	PlaylistID    string                     `json:"playlistId"`
 	Timestamp     string                     `json:"timestamp"`
 	SavedAt       string                     `json:"savedAt"`
-	Meta          string                     `json:"meta"` // 加密的 cookies 数据
 }
 
-// Cookie 结构体（兼容 Chrome cookies API）
-type Cookie struct {
-	Domain         string  `json:"domain"`
-	ExpirationDate float64 `json:"expirationDate"`
-	HostOnly       bool    `json:"hostOnly"`
-	HTTPOnly       bool    `json:"httpOnly"`
-	Name           string  `json:"name"`
-	Path           string  `json:"path"`
-	SameSite       string  `json:"sameSite"`
-	Secure         bool    `json:"secure"`
-	Session        bool    `json:"session"`
-	StoreID        string  `json:"storeId"`
-	Value          string  `json:"value"`
-}
-
+// saveVideoSubtitles 保存视频字幕信息
+// @Summary 保存视频信息和字幕
+// @Description 接收来自浏览器插件的视频和字幕信息，启动处理流程
+// @Tags 字幕管理
+// @Accept json
+// @Produce json
+// @Param body body SaveVideoRequest true "视频和字幕信息"
+// @Success 200 {object} map[string]interface{} "成功"
+// @Failure 400 {object} map[string]interface{} "请求参数错误"
+// @Failure 500 {object} map[string]interface{} "服务器错误"
+// @Router /api/videos/save [post]
 func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 	var req SaveVideoRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -71,6 +73,7 @@ func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 	fmt.Println("========================================")
 	fmt.Println("📥 用户调用保存视频接口")
 	fmt.Printf("🔗 URL: %s\n", req.URL)
+	fmt.Printf("🔗 meta: %s\n", req.Meta)
 	fmt.Printf("📺 标题: %s\n", req.Title)
 	fmt.Printf("🎬 操作类型: %s\n", req.OperationType)
 	fmt.Println("========================================")
@@ -122,10 +125,10 @@ func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 	}
 
 	// 检查是否已存在相同的 videoId（包括已删除的记录）
-	var existingVideo model.SavedVideo
-	err = h.App.DB.Unscoped().Where("video_id = ?", videoID).First(&existingVideo).Error
+	var existingVideo model.Video
+	err = h.DB.Unscoped().Where("video_id = ?", videoID).First(&existingVideo).Error
 
-	var savedVideo *model.SavedVideo
+	var savedVideo *model.Video
 	isExisting := false
 
 	if err == nil {
@@ -137,13 +140,18 @@ func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 		existingVideo.OperationType = req.OperationType
 		existingVideo.Subtitles = subtitlesJSONStr
 		existingVideo.PlaylistID = req.PlaylistID
-		existingVideo.Timestamp = req.Timestamp
+	// Convert timestamp string to int64
+	if req.Timestamp != "" {
+		if ts, err := strconv.ParseInt(req.Timestamp, 10, 64); err == nil {
+			existingVideo.Timestamp = ts
+		}
+	}
 		existingVideo.SavedAt = req.SavedAt
-		existingVideo.Status = "001" // 重置状态为待处理
+		existingVideo.Status = model.VideoStatusPending // 重置状态为待处理
 		existingVideo.DeletedAt = gorm.DeletedAt{} // 恢复记录（清除删除标记）
 
 		// 更新到数据库（使用 Unscoped 以便更新已删除的记录）
-		if err := h.App.DB.Unscoped().Save(&existingVideo).Error; err != nil {
+		if err := h.DB.Unscoped().Save(&existingVideo).Error; err != nil {
 			fmt.Printf("更新视频失败，字幕数据长度: %d\n", len(subtitlesJSONStr))
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
@@ -158,21 +166,29 @@ func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 		}
 	} else if err == gorm.ErrRecordNotFound {
 		// 记录不存在，创建新记录
-		savedVideo = &model.SavedVideo{
+		// Convert timestamp string to int64
+		var timestamp int64
+		if req.Timestamp != "" {
+			if ts, err := strconv.ParseInt(req.Timestamp, 10, 64); err == nil {
+				timestamp = ts
+			}
+		}
+		
+		savedVideo = &model.Video{
 			VideoID:       videoID,
 			URL:           req.URL,
 			Title:         req.Title,
-			Status:        "001",
+			Status:        model.VideoStatusPending,
 			Description:   req.Description,
 			OperationType: req.OperationType,
 			Subtitles:     subtitlesJSONStr,
 			PlaylistID:    req.PlaylistID,
-			Timestamp:     req.Timestamp,
+			Timestamp:     timestamp,
 			SavedAt:       req.SavedAt,
 		}
 
 		// 保存到数据库
-		if err := h.App.DB.Create(savedVideo).Error; err != nil {
+		if err := h.DB.Create(savedVideo).Error; err != nil {
 			fmt.Printf("创建视频失败，字幕数据长度: %d\n", len(subtitlesJSONStr))
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
@@ -210,30 +226,55 @@ func (h *SubtitleHandler) saveVideoSubtitles(c *gin.Context) {
 	})
 }
 
+// Cookie 结构体（与浏览器 chrome.cookies API 兼容）
+type Cookie struct {
+	Domain         string  `json:"domain"`
+	ExpirationDate float64 `json:"expirationDate,omitempty"`
+	HostOnly       bool    `json:"hostOnly"`
+	HTTPOnly       bool    `json:"httpOnly"`
+	Name           string  `json:"name"`
+	Path           string  `json:"path"`
+	SameSite       string  `json:"sameSite"`
+	Secure         bool    `json:"secure"`
+	Session        bool    `json:"session"`
+	StoreID        string  `json:"storeId"`
+	Value          string  `json:"value"`
+}
+
+
+
 // RegisterRoutes 注册上传相关路由（无认证）
-func (h *SubtitleHandler) RegisterRoutes(server *core.AppServer) {
-	api := server.Engine.Group("/api/v1")
+func (h *SubtitleHandler) RegisterRoutes(r *gin.Engine) {
+	api := r.Group("/api/v1")
 	api.POST("/submit", h.saveVideoSubtitles)
 }
 
 // RegisterRoutesWithAuth 注册上传相关路由（带认证和解密）
-func (h *SubtitleHandler) RegisterRoutesWithAuth(server *core.AppServer, authMiddleware *auth.Middleware, decryptKey string) {
-	api := server.Engine.Group("/api/v1")
+func (h *SubtitleHandler) RegisterRoutesWithAuth(r *gin.Engine, decryptMiddleware gin.HandlerFunc) {
+	api := r.Group("/api/v1")
 
-	
-	// 创建解密中间件
-	decryptMiddleware := auth.DecryptCookies(decryptKey)
-
-	// 为 /submit 路由添加认证中间件和解密中间件
-	api.POST("/submit", authMiddleware.Handler(), decryptMiddleware, h.saveVideoSubtitles)
+	if decryptMiddleware != nil {
+		// 为 /submit 路由添加解密中间件
+		api.POST("/submit", decryptMiddleware, h.saveVideoSubtitles)
+	} else {
+		// 无中间件
+		api.POST("/submit", h.saveVideoSubtitles)
+	}
 }
 
 // saveCookiesToFile 保存 cookies 到文件（Netscape 格式）
 func (h *SubtitleHandler) saveCookiesToFile(cookiesStr string) error {
 	// 创建 cookies 目录
-	cookiesDir := filepath.Join(h.App.Config.DataPath, "cookies")
+	cookiesDir := h.cfg.Workflow.CookiesDir
+	if cookiesDir == "" {
+		cookiesDir = "/tmp/cookies"
+	}
+	fmt.Printf("📁 Cookies 目录: %s\n", cookiesDir)
+
+	fmt.Printf("📋 原始 cookies 数据长度: %d 字符\n", len(cookiesStr))
+	
 	if err := os.MkdirAll(cookiesDir, 0755); err != nil {
-		return fmt.Errorf("创建 cookies 目录失败: %w", err)
+		return fmt.Errorf("创建 cookies 目录失败: %w (路径: %s)", err, cookiesDir)
 	}
 
 	// 生成文件名（使用时间戳）

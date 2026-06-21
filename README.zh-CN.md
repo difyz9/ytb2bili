@@ -1,119 +1,74 @@
 # ytb2bili
 
-[English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+<p align="center">
+	<img src="web/public/logo.png" alt="ytb2bili logo" width="640" />
+</p>
 
-`ytb2bili` 是一个面向本地视频翻译播放与 YouTube 到 Bilibili 搬运的处理系统，提供 Web 管理后台、任务链编排、字幕处理、AI 文案生成、字幕音频合成、音视频同步播放、B 站上传、字幕上传等完整能力。
+<p align="center">
+	<a href="https://github.com/difyz9/ytb2bili/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/difyz9/ytb2bili?display_name=tag" /></a>
+	<a href="https://github.com/difyz9/ytb2bili/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/difyz9/ytb2bili?style=social" /></a>
+	<a href="https://github.com/difyz9/ytb2bili/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/difyz9/ytb2bili" /></a>
+	<a href="https://github.com/difyz9/ytb2bili/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/difyz9/ytb2bili" /></a>
+</p>
 
-视频教程：https://www.bilibili.com/video/BV1tCRTBBEJo
+语言: [English](README.en.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+
+ytb2bili 是一个面向本地视频翻译播放与 YouTube 到 Bilibili 发布的工作流平台，提供 Go 后端、Next.js Web 管理后台、任务链编排、字幕处理、AI 文案生成、字幕配音、音视频同步播放和 B 站上传自动化能力。
+
+## 项目能做什么
+
+- 将本地视频或在线视频链接导入统一处理流水线。
+- 自动完成下载、提取音频、生成字幕、翻译字幕和合成配音。
+- 通过 AI 生成适合 B 站投稿的标题、简介和标签。
+- 在处理完成后上传视频和字幕到 Bilibili。
+- 通过 Web 后台完成任务查看、账号绑定、重试、手动上传和 AI 助手操作。
 
 ## 核心特性
 
-- 本地视频翻译播放：支持本地视频生成翻译字幕与配音，并以音视频同步方式播放和校对
-- YouTube 到 B 站全流程处理：下载视频、提取音频、转录字幕、翻译字幕、生成元数据、上传 B 站
-- 可配置任务链：各步骤可以按用户设置启停，前后端对齐执行语义
-- AI 能力集成：支持 AI 翻译、标题、简介、标签生成、字幕音频合成、翻译后配音
-- B 站集成：支持扫码登录、视频投稿、字幕上传、账号状态管理
-- 现代 Web 管理后台：Go 后端加 Next.js 前端，支持任务查看、重跑、手动上传等操作
+- 本地视频翻译播放与字幕、配音同步校对。
+- YouTube 到 Bilibili 的端到端处理流程。
+- 可配置任务链：下载、提取音频、转录、翻译、生成元数据、字幕配音、上传。
+- 支持 Bilibili 账号绑定与发布。
+- 支持 AI 辅助元数据生成和工作流操作。
+- 提供任务队列、设置、账号管理和任务历史等后台页面。
 
-## 5 分钟 Docker 部署
+## 架构概览
 
-推荐使用 Docker Compose 直接启动服务，默认会启动两个服务：
+仓库主要由三部分组成：
 
-- `mysql`：持久化任务、账号和运行数据
-- `ytb2bili`：Web 管理后台和搬运服务
+- 处理引擎：Go 服务负责下载、转录、翻译、元数据生成、语音合成、B 站上传和任务编排。
+- Web 管理后台：Next.js 前端提供管理界面、AI 助手、任务视图、账号管理和设置页面。
+- 运行与部署支撑：配置文件、Docker 资源和运维文档支撑本地开发与部署。
 
-### 1. 准备环境
+## 仓库结构
 
-- Docker
-- Docker Compose
+- `internal/`: 后端应用代码、路由、工作流、持久化和启动装配。
+- `pkg/`: 可复用包，包括 LLM 集成、工具、B 站相关模块和共享模型。
+- `web/`: 前端应用。
+- `configs/`: 配置示例与说明。
+- `docs/`: 功能、部署、架构和排障文档。
+- `docker/`: 容器构建与运行文件。
 
-### 2. 获取部署文件
+## 环境要求
 
-```bash
-git clone https://github.com/difyz9/ytb2bili-docker.git
-cd ytb2bili-docker
-docker compose up -d
-```
+推荐本地环境：
 
-### 3. 使用最小配置启动
+- Go 1.20+
+- Node.js 18+
+- npm
+- MySQL 8+
+- ffmpeg
+- yt-dlp
 
-默认情况下，`[database]` 配置已经和 `docker-compose.yml` 对齐，通常不用改。至少保留下面这段：
+如果你启用了相关能力，通常还需要：
 
-```toml
-[server]
-host = "0.0.0.0"
-port = 8096
-static_dir = "./downloads"
-static_path = "/static"
+- API2Key 兼容后端服务
+- 微软语音服务凭证
+- DeepSeek 或其他 LLM 的访问凭证
 
-[database]
-type = "mysql"
-host = "mysql"
-port = 3306
-user = "ytb2bili"
-password = "ytb2bili@123"
-dbname = "bili_up"
-sslmode = ""
-timezone = "Asia/Shanghai"
-auto_migrate = true
-table_prefix = ""
+## 快速开始
 
-[workflow]
-download_dir = "./downloads"
-ytdlp_path = "/usr/local/bin/yt-dlp"
-ffmpeg_path = "/usr/bin/ffmpeg"
-
-# 如果你的网络访问 YouTube 需要代理，再补：
-# proxy_url = "http://127.0.0.1:7890"
-```
-
-### 4. 启动服务
-
-```bash
-docker compose up -d
-docker compose logs -f
-```
-
-服务正常启动后，打开 `http://localhost:8096`
-
-### 5. 开始使用
-
-1. 进入后台
-2. 用 B 站 App 扫码登录
-3. 新建任务并粘贴视频链接
-4. 等待系统自动下载、处理并上传
-
-常用命令：
-
-```bash
-docker compose ps
-docker compose restart
-docker compose down
-```
-
-如需 Docker 相关补充说明，可查看 [docker/README.md](docker/README.md)。
-
-## 技术架构
-
-项目由三部分组成：
-
-- 处理引擎：Go 后端负责下载、转录、翻译、元数据生成、字幕音频合成、B 站上传、字幕上传等任务链执行
-- 管理后台：Next.js 前端提供任务面板、配置页面、账号管理、手动上传、本地视频翻译播放与同步校对等操作界面
-- 运行支撑：通过 `config.toml`、数据库、Docker 部署文件和文档体系支撑本地开发与生产运行
-
-## 项目结构
-
-仓库中的核心目录：
-
-- `internal/`：后端应用代码，包括任务链、处理逻辑和服务装配
-- `pkg/`：可复用模块，包括 B 站集成、工具实现和数据模型
-- `web/`：Web 管理后台前端代码
-- `docker/`：Docker 构建、运行和部署文件
-- `bin/`：示例脚本、测试辅助和工作流文件
-
-## 本地开发
-
-### 1. 获取代码
+### 1. 克隆仓库
 
 ```bash
 git clone https://github.com/difyz9/ytb2bili.git
@@ -126,7 +81,18 @@ cd ytb2bili
 cp config.toml.example config.toml
 ```
 
-按需填写数据库、下载目录、API Key、代理等配置。常用配置入口见 [config.toml.example](config.toml.example)。
+根据你的环境修改 `config.toml`。建议优先配置：
+
+- `server.*`
+- `database.*`
+- `workflow.*`
+- `api2key.*`
+- 可选的 `deepseek.*`
+
+相关入口：
+
+- [config.toml.example](config.toml.example)
+- [configs/README.md](configs/README.md)
 
 ### 3. 启动后端
 
@@ -134,6 +100,8 @@ cp config.toml.example config.toml
 go mod download
 go run main.go
 ```
+
+默认地址为 `http://localhost:8096`。
 
 ### 4. 启动前端
 
@@ -143,56 +111,49 @@ npm install
 npm run dev
 ```
 
-### 5. 使用流程
+前端开发服务器默认地址为 `http://localhost:3000`。
 
-1. 打开 Web 管理后台
-2. 登录 B 站账号
-3. 上传本地视频，生成翻译字幕与配音，并在后台进行音视频同步播放和校对
-4. 安装 Chrome 插件：https://api.github.com/repos/difyz9/ytb2bili_extension/releases/latest
-5. 安装插件后，打开任意 YouTube 视频页面，点击插件图标提交视频链接
-6. 在管理后台查看任务链执行状态与日志
-7. 在需要时重跑步骤、修改文案或手动投稿到 B 站
+### 5. 常见使用流程
 
-## 核心流程
+1. 打开 Web 管理后台。
+2. 绑定 Bilibili 账号。
+3. 上传本地视频或提交支持的视频链接。
+4. 按需检查字幕、翻译和配音效果。
+5. 在后台查看任务进度。
+6. 将处理结果发布到 Bilibili。
 
-1. 导入本地视频或提交 YouTube 链接
-2. 下载视频与缩略图
-3. 提取音频
-4. 生成字幕
-5. 翻译字幕
-6. 合成翻译配音并进行音视频同步播放
-7. 生成标题、简介、标签
-8. 上传 B 站视频
-9. 上传 B 站字幕
+## Docker 与部署
 
-## 配置与构建
+仓库中已经包含多种容器相关说明：
 
-项目使用 `config.toml` 作为主要运行配置。开始前可先执行：
+- [docker/README.md](docker/README.md): Docker 测试/部署流程。
+- [README.docker.md](README.docker.md): Docker 开发环境流程。
 
-```bash
-cp config.toml.example config.toml
-```
+如果你是发布到 GitHub，建议主 README 保持精简，容器细节放在上述文档中维护。
 
-常用配置项包括：
+## 社区交流
 
-- `server.port`：服务端口
-- `database.*`：数据库连接信息
-- `workflow.*`：下载目录、代理、ffmpeg、yt-dlp 等工作流配置
-- `api2key.*`：AI、积分、翻译、TTS 等统一后端能力
-- `updater.enabled`：自动更新开关
+如果你想获取版本更新、排障支持或交流使用方式，可以直接通过 GitHub 仓库联系，也可以扫描下面的社群二维码。
 
-常用构建命令：
+<p>
+	<img src="img/220421_706.png" alt="QQ群二维码" width="280" />
+	<img src="img/751763091471.jpg" alt="微信联系二维码" width="280" />
+</p>
+
+## 构建与验证
+
+常用命令：
 
 ```bash
+make dev
+make web-dev
 make build
-make build-dev
-make build-linux-arm64
-make build-all
+make build-linux-amd64
+make test
+make vet
 ```
 
-如果你要扩展流程，优先查看 `internal/chain_task/` 下已有的处理步骤实现。
-
-## 验证命令
+验证示例：
 
 ```bash
 go test ./...
@@ -200,16 +161,22 @@ go build -o ytb2bili main.go
 curl http://localhost:8096/health
 ```
 
-## 许可证与联系方式
+## 文档索引
 
-- 许可证：[MIT License](LICENSE)
-- GitHub：[@difyz9](https://github.com/difyz9)
-- 项目链接：[https://github.com/difyz9/ytb2bili](https://github.com/difyz9/ytb2bili)
-- QQ 交流群：773066052
+- [文档索引](docs/INDEX.md)
+- [项目指南](PROJECT_GUIDE.md)
+- [配置指南](docs/CONFIG_GUIDE.md)
+- [部署指南](DEPLOYMENT_GUIDE.md)
 
-<div align="center">
+## 许可证
 
-<img src="img/220421_706.png" alt="QQ群二维码" width="180"/>
-<img src="img/751763091471.jpg" alt="微信二维码" width="180"/>
+[MIT License](LICENSE)
 
-</div>
+## 贡献
+
+欢迎提交 Issue 和 Pull Request。
+
+## 联系方式
+
+- GitHub: [@difyz9](https://github.com/difyz9)
+- 仓库地址: [https://github.com/difyz9/ytb2bili](https://github.com/difyz9/ytb2bili)

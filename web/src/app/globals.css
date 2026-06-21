@@ -2,133 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@layer base {
+  * {
+    @apply border-border;
   }
-  
-  /* 淡入动画 */
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-in;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* 漂浮动画 */
-  .animate-blob {
-    animation: blob 7s infinite;
-  }
-  
-  @keyframes blob {
-    0% {
-      transform: translate(0px, 0px) scale(1);
-    }
-    33% {
-      transform: translate(30px, -50px) scale(1.1);
-    }
-    66% {
-      transform: translate(-20px, 20px) scale(0.9);
-    }
-    100% {
-      transform: translate(0px, 0px) scale(1);
-    }
-  }
-  
-  .animation-delay-2000 {
-    animation-delay: 2s;
-  }
-  
-  .animation-delay-4000 {
-    animation-delay: 4s;
-  }
-}
-
-/* 自定义组件样式 */
-@layer components {
-  .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors;
-  }
-  
-  .card {
-    @apply bg-white rounded-lg shadow-md border border-gray-200 p-6;
-  }
-  
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
-  }
-  
-  .status-pending {
-    @apply bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-processing {
-    @apply bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-ready {
-    @apply bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-uploading {
-    @apply bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-upload-failed {
-    @apply bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-video-uploaded {
-    @apply bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-uploading-subtitle {
-    @apply bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-subtitle-failed {
-    @apply bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-all-completed {
-    @apply bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-completed {
-    @apply bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm;
-  }
-  
-  .status-failed {
-    @apply bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm;
+  body {
+    @apply bg-background text-foreground;
   }
 }

@@ -1,0 +1,1901 @@
+basePath: /api
+definitions:
+  handler.BindingInfo:
+    properties:
+      avatar:
+        type: string
+      create_time:
+        type: integer
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      platform:
+        type: string
+      platform_uid:
+        type: string
+      status:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.CookiesStatusData:
+    properties:
+      file_path:
+        type: string
+      file_size:
+        type: integer
+      has_cookies:
+        type: boolean
+      update_time:
+        type: string
+    type: object
+  handler.ErrorResponse:
+    properties:
+      code:
+        example: 500
+        type: integer
+      message:
+        example: 错误信息
+        type: string
+    type: object
+  handler.GenerateBindingQRCodeRequest:
+    properties:
+      platform:
+        description: '平台: bilibili, douyin, kuaishou'
+        type: string
+      user_id:
+        description: Firebase用户ID
+        type: string
+    required:
+    - platform
+    - user_id
+    type: object
+  handler.GenerateBindingQRCodeResponse:
+    properties:
+      expires_in:
+        description: 过期时间（秒）
+        type: integer
+      qr_code:
+        description: 二维码URL
+        type: string
+      qr_code_key:
+        description: 二维码密钥
+        type: string
+    type: object
+  handler.HealthResponse:
+    properties:
+      buildTime:
+        type: string
+      commitSHA:
+        type: string
+      ok:
+        type: boolean
+      version:
+        type: string
+    type: object
+  handler.PollBindingStatusRequest:
+    properties:
+      qr_code_key:
+        type: string
+    required:
+    - qr_code_key
+    type: object
+  handler.PollBindingStatusResponse:
+    properties:
+      avatar:
+        description: 平台头像
+        type: string
+      platform:
+        description: 平台
+        type: string
+      platform_uid:
+        description: 平台用户ID
+        type: string
+      status:
+        description: pending, bound, expired
+        type: string
+      username:
+        description: 平台用户名
+        type: string
+    type: object
+  handler.ProductListResponseWrapper:
+    properties:
+      code:
+        example: 0
+        type: integer
+      data:
+        $ref: '#/definitions/services.ProductListResponse'
+      message:
+        example: success
+        type: string
+    type: object
+  handler.ProductResponseWrapper:
+    properties:
+      code:
+        example: 0
+        type: integer
+      data:
+        $ref: '#/definitions/services.Product'
+      message:
+        example: success
+        type: string
+    type: object
+  handler.RecommendedVideosRequest:
+    properties:
+      categoryId:
+        example: "28"
+        type: string
+      maxResults:
+        example: 10
+        type: integer
+      order:
+        example: relevance
+        type: string
+      videoId:
+        example: dQw4w9WgXcQ
+        type: string
+    type: object
+  handler.RefreshTokenRequest:
+    properties:
+      binding_id:
+        type: integer
+    required:
+    - binding_id
+    type: object
+  handler.Response:
+    properties:
+      code:
+        description: HTTP 状态码
+        type: integer
+      data:
+        description: 响应数据
+      message:
+        description: 响应消息
+        type: string
+    type: object
+  handler.RunRequest:
+    properties:
+      query:
+        type: string
+    required:
+    - query
+    type: object
+  handler.SaveVideoRequest:
+    properties:
+      description:
+        type: string
+      meta:
+        type: string
+      operationType:
+        type: string
+      playlistId:
+        type: string
+      savedAt:
+        type: string
+      subtitles:
+        items:
+          $ref: '#/definitions/model.SavedVideoSubtitle'
+        type: array
+      timestamp:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  handler.SubmitLinkRequest:
+    properties:
+      url:
+        type: string
+      user_id:
+        type: string
+    required:
+    - url
+    type: object
+  handler.SubmitVideoRequest:
+    properties:
+      title:
+        type: string
+      user_id:
+        type: string
+      video_path:
+        type: string
+    required:
+    - video_path
+    type: object
+  handler.TrendingVideosRequest:
+    properties:
+      categoryId:
+        example: "10"
+        type: string
+      chart:
+        example: mostPopular
+        type: string
+      maxResults:
+        example: 10
+        type: integer
+      regionCode:
+        example: US
+        type: string
+    type: object
+  handler.UpdateUserInfoRequest:
+    properties:
+      avatar:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.UploadRequest:
+    properties:
+      video_path:
+        description: 视频文件路径
+        type: string
+      video_url:
+        description: 原视频URL（可选）
+        type: string
+    required:
+    - video_path
+    type: object
+  handler.UploadVideoResponse:
+    properties:
+      file_name:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+      video_id:
+        type: string
+      video_path:
+        type: string
+    type: object
+  handler.UserInfoResponse:
+    properties:
+      display_name:
+        description: 显示名称（Firebase：username 或 email 前缀；邮箱：email 前缀）
+        type: string
+      email:
+        description: 邮箱
+        type: string
+      id:
+        description: 用户唯一 ID（Firebase 路径为 firebase_uid，邮箱路径为 email-auth SDK 分配的 ID）
+        type: string
+      photo_url:
+        description: 头像 URL，无则为空字符串
+        type: string
+      provider:
+        description: 登录来源：firebase | email
+        type: string
+    type: object
+  handler.VideoProcessData:
+    properties:
+      audio_path:
+        type: string
+      processed_at:
+        type: string
+      status:
+        type: string
+      transcript:
+        $ref: '#/definitions/tools.TranscriptResult'
+      video_id:
+        type: string
+      video_path:
+        type: string
+    type: object
+  handler.VideoProcessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/handler.VideoProcessData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  handler.YouTubeAuthorizeResponse:
+    properties:
+      auth_url:
+        description: Google OAuth2 授权地址
+        type: string
+    type: object
+  handler.emailLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.emailRegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.SavedVideoSubtitle:
+    properties:
+      duration:
+        description: 持续时间
+        type: number
+      lang:
+        description: 语言
+        type: string
+      offset:
+        description: 偏移时间
+        type: number
+      text:
+        description: 字幕文本
+        type: string
+    type: object
+  payment.CreatePaymentRequest:
+    properties:
+      amount:
+        description: 支付金额
+        type: number
+      orderType:
+        description: 订单类型
+        type: string
+      payWay:
+        description: 支付方式：alipay/wechat/paypal
+        type: string
+      planId:
+        description: 套餐ID（会员订单时使用）
+        type: string
+      returnUrl:
+        description: 支付成功返回地址（支付宝使用）
+        type: string
+      subject:
+        description: 商品名称
+        type: string
+    required:
+    - amount
+    - orderType
+    - payWay
+    - subject
+    type: object
+  services.Product:
+    properties:
+      bonusCoin:
+        type: integer
+      coinAmount:
+        type: integer
+      createdAt:
+        type: string
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      originalPrice:
+        type: number
+      price:
+        type: number
+      productId:
+        type: string
+      projectId:
+        type: string
+      sales:
+        description: 销量
+        type: integer
+      sort:
+        type: integer
+      status:
+        description: active/inactive
+        type: string
+      type:
+        description: coin/vip/combo
+        type: string
+      updatedAt:
+        type: string
+      vipDays:
+        type: integer
+    type: object
+  services.ProductListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/services.Product'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  tools.TranscriptResult:
+    properties:
+      full_text:
+        type: string
+      language:
+        type: string
+      segments:
+        items:
+          $ref: '#/definitions/tools.TranscriptSegment'
+        type: array
+      srt_path:
+        description: SRT 字幕文件路径
+        type: string
+    type: object
+  tools.TranscriptSegment:
+    properties:
+      end:
+        type: number
+      start:
+        type: number
+      text:
+        type: string
+    type: object
+host: 127.0.0.1:8096
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API for downloading YouTube videos and uploading to Bilibili with AI-powered
+    processing
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: YouTube to Bilibili API
+  version: "1.0"
+paths:
+  /agent/info:
+    get:
+      consumes:
+      - application/json
+      description: Get agent name, available tools, and their parameter schemas
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get agent information
+      tags:
+      - agent
+  /agent/run:
+    post:
+      consumes:
+      - application/json
+      description: Submit a natural language task; AI agent orchestrates tools automatically
+        via native function calling
+      parameters:
+      - description: Task description
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RunRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Execute natural language task
+      tags:
+      - agent
+  /api/auth/email/login:
+    post:
+      consumes:
+      - application/json
+      description: 用邮箱和密码登录，返回 JWT token
+      parameters:
+      - description: 登录信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.emailLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token, expires_at, user
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 邮箱登录
+      tags:
+      - auth
+  /api/auth/email/register:
+    post:
+      consumes:
+      - application/json
+      description: 用邮箱和密码创建新账户，返回 JWT token
+      parameters:
+      - description: 注册信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.emailRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: token, expires_at, user
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 邮箱注册
+      tags:
+      - auth
+  /api/user/me:
+    get:
+      description: 支持邮箱 JWT 和 Firebase 两种登录方式，返回统一结构
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.UserInfoResponse'
+        "401":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取当前登录用户信息
+      tags:
+      - user
+  /api/user/update:
+    put:
+      consumes:
+      - application/json
+      description: 更新当前登录用户的信息
+      parameters:
+      - description: 用户信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateUserInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新后的用户信息
+          schema:
+            $ref: '#/definitions/handler.UserInfoResponse'
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 更新用户信息
+      tags:
+      - user
+  /api/v1/bili-accounts:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户绑定的所有B站账号
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    additionalProperties: true
+                    type: object
+                  type: array
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取B站账号列表
+      tags:
+      - bili-accounts
+  /api/v1/bili-accounts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 解绑指定的B站账号
+      parameters:
+      - description: 账号ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: 账号不存在
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - BearerAuth: []
+      summary: 解绑B站账号
+      tags:
+      - bili-accounts
+  /api/v1/bili-accounts/{id}/primary:
+    put:
+      consumes:
+      - application/json
+      description: 将指定账号设置为主账号
+      parameters:
+      - description: 账号ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: 账号不存在
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - BearerAuth: []
+      summary: 设置主账号
+      tags:
+      - bili-accounts
+  /api/v1/bindings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 解绑指定的平台账号
+      parameters:
+      - description: 绑定ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 解绑账号
+      tags:
+      - account-bindings
+  /api/v1/bindings/list:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户的所有已绑定账号列表
+      parameters:
+      - description: 用户ID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.BindingInfo'
+                  type: array
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取账号绑定列表
+      tags:
+      - account-bindings
+  /api/v1/bindings/poll:
+    post:
+      consumes:
+      - application/json
+      description: 轮询二维码扫描和绑定状态，用于前端实时检查绑定进度
+      parameters:
+      - description: 轮询请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PollBindingStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PollBindingStatusResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 轮询绑定状态
+      tags:
+      - account-bindings
+  /api/v1/bindings/qrcode:
+    post:
+      consumes:
+      - application/json
+      description: 为指定平台生成账号绑定二维码，用户扫码后可绑定账号
+      parameters:
+      - description: 生成二维码请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.GenerateBindingQRCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GenerateBindingQRCodeResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 生成账号绑定二维码
+      tags:
+      - account-bindings
+  /api/v1/bindings/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 刷新指定绑定的访问令牌
+      parameters:
+      - description: 刷新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 刷新令牌
+      tags:
+      - account-bindings
+  /api/v1/bindings/youtube/authorize:
+    get:
+      consumes:
+      - application/json
+      description: 生成YouTube OAuth2授权URL，前端直接跳转完成授权，无需弹窗或二维码
+      parameters:
+      - description: 用户ID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.YouTubeAuthorizeResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取YouTube OAuth2授权URL（桌面应用方式）
+      tags:
+      - account-bindings
+  /api/v1/bindings/youtube/callback:
+    get:
+      consumes:
+      - application/json
+      description: 处理YouTube OAuth授权回调，完成账号绑定
+      parameters:
+      - description: 授权码
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: 状态值（qr_code_key）
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: 重定向到前端
+          schema:
+            type: string
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: YouTube OAuth回调
+      tags:
+      - account-bindings
+  /api/v1/cookies:
+    delete:
+      consumes:
+      - application/json
+      description: 删除已上传的 YouTube cookies 文件。删除后需要重新上传才能下载受限制的视频
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.CookiesStatusData'
+              type: object
+        "404":
+          description: Cookies 文件不存在
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 删除文件失败
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 删除 cookies 文件
+      tags:
+      - cookies
+  /api/v1/cookies/status:
+    get:
+      consumes:
+      - application/json
+      description: 检查 cookies 文件是否存在，返回文件路径、大小和最后更新时间等详细信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回文件状态
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.CookiesStatusData'
+              type: object
+        "500":
+          description: 检查文件失败
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取 cookies 文件状态
+      tags:
+      - cookies
+  /api/v1/cookies/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传 Netscape 格式的 cookies.txt 文件，用于 yt-dlp 下载受限制的 YouTube 视频。文件需从浏览器导出，最大支持
+        10MB
+      parameters:
+      - description: Cookies 文件 (Netscape 格式，.txt 文件)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 上传成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.CookiesStatusData'
+              type: object
+        "400":
+          description: 参数错误：文件格式不正确、文件过大或文件格式无效
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误：文件写入失败
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 上传 YouTube cookies 文件
+      tags:
+      - cookies
+  /api/v1/payment/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建支付订单，返回支付链接（微信支付返回二维码URL）
+      parameters:
+      - description: 支付请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/payment.CreatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"code":200,"data":{"orderNo":"xxx","payUrl":"xxx","amount":99.0,"payWay":"wechat"}}'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: '{"code":400,"message":"参数错误"}'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: '{"code":401,"message":"未授权"}'
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 创建支付订单
+      tags:
+      - 支付
+  /api/v1/payment/order/{orderNo}:
+    get:
+      consumes:
+      - application/json
+      description: 查询订单支付状态，如果已支付会自动激活会员
+      parameters:
+      - description: 订单号
+        in: path
+        name: orderNo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"code":200,"data":{"orderNo":"xxx","status":1,"amount":99.0}}'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: '{"code":400,"message":"参数错误"}'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: '{"code":401,"message":"未授权"}'
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询订单状态
+      tags:
+      - 支付
+  /api/v1/payment/orders:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的订单列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"code":200,"data":{"list":[],"total":0}}'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: '{"code":401,"message":"未授权"}'
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取我的订单列表
+      tags:
+      - 支付
+  /api/v1/products:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取商品列表，支持按项目ID、类型和状态筛选。通过 projectId 参数可以筛选指定项目下的商品数组
+      parameters:
+      - description: 项目ID，用于筛选指定项目下的商品
+        example: '"pay_for_bilibili"'
+        in: query
+        name: projectId
+        type: string
+      - description: 商品类型
+        enum:
+        - coin
+        - vip
+        - combo
+        in: query
+        name: type
+        type: string
+      - description: 状态
+        enum:
+        - active
+        - inactive
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/handler.ProductListResponseWrapper'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取商品列表
+      tags:
+      - 商品
+  /api/v1/products/{productId}:
+    get:
+      consumes:
+      - application/json
+      description: 根据商品业务ID（productId，非数据库id）获取商品详细信息
+      parameters:
+      - description: 商品业务ID（如：prod_001）
+        in: path
+        name: productId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/handler.ProductResponseWrapper'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: 商品不存在
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取商品详情
+      tags:
+      - 商品
+  /api/v1/updater/check:
+    post:
+      consumes:
+      - application/json
+      description: 检查 GitHub Releases 是否有新版本可用
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 检查是否有新版本
+      tags:
+      - Updater
+  /api/v1/updater/status:
+    get:
+      consumes:
+      - application/json
+      description: 获取自动更新配置和状态信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: 获取更新状态
+      tags:
+      - Updater
+  /api/v1/updater/update:
+    post:
+      consumes:
+      - application/json
+      description: 下载并安装新版本（公开接口，建议在生产环境中添加权限控制）
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 执行更新
+      tags:
+      - Updater
+  /api/v1/updater/version:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前应用版本号和构建信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: 获取当前版本
+      tags:
+      - Updater
+  /api/v1/upload/bilibili:
+    post:
+      consumes:
+      - application/json
+      description: 将已下载的视频上传到B站（使用用户的主B站账号）
+      parameters:
+      - description: 上传请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 上传成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 上传失败
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 上传视频到B站
+      tags:
+      - upload
+  /api/v1/video-process/submit-link:
+    post:
+      consumes:
+      - application/json
+      description: 提交YouTube视频链接，系统会自动下载视频、提取音频、转录文本
+      parameters:
+      - description: 视频链接提交请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SubmitLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.VideoProcessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.VideoProcessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.VideoProcessResponse'
+      summary: 提交视频链接进行处理
+      tags:
+      - video-process
+  /api/v1/video-process/submit-video:
+    post:
+      consumes:
+      - application/json
+      description: 提交已上传的视频文件路径，系统会提取音频并转录文本
+      parameters:
+      - description: 视频文件提交请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SubmitVideoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.VideoProcessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.VideoProcessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.VideoProcessResponse'
+      summary: 提交上传的视频进行处理
+      tags:
+      - video-process
+  /api/v1/video-process/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传本地视频文件到服务器
+      parameters:
+      - description: 视频文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.UploadVideoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.UploadVideoResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.UploadVideoResponse'
+      summary: 上传视频文件
+      tags:
+      - video-process
+  /api/v1/youtube/recommended:
+    post:
+      consumes:
+      - application/json
+      description: 根据视频ID或分类ID获取推荐视频
+      parameters:
+      - description: 推荐视频请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RecommendedVideosRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'videos: array'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取推荐视频
+      tags:
+      - youtube
+  /api/v1/youtube/search/page:
+    post:
+      consumes:
+      - application/json
+      description: 使用关键字搜索YouTube视频，支持分页
+      parameters:
+      - description: 搜索参数
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'videos: array, total: int'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 搜索YouTube视频（分页）
+      tags:
+      - youtube
+  /api/videos/save:
+    post:
+      consumes:
+      - application/json
+      description: 接收来自浏览器插件的视频和字幕信息，启动处理流程
+      parameters:
+      - description: 视频和字幕信息
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SaveVideoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 保存视频信息和字幕
+      tags:
+      - 字幕管理
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check if the API service is running and get build info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+      summary: Health check
+      tags:
+      - health
+  /youtube/TbSubscriptions:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的YouTube订阅频道列表（支持分页）
+      parameters:
+      - description: 用户ID（可选，默认从Token获取）
+        in: query
+        name: user_id
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'list: array, total: int, page: int, size: int'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取用户订阅列表
+      tags:
+      - youtube
+  /youtube/TbSubscriptions/sync:
+    post:
+      consumes:
+      - application/json
+      description: 从YouTube API同步用户的订阅频道列表
+      parameters:
+      - description: 用户ID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      - description: 访问令牌
+        in: query
+        name: access_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'synced: int'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 同步用户订阅
+      tags:
+      - youtube
+  /youtube/categories:
+    get:
+      consumes:
+      - application/json
+      description: 获取YouTube视频分类列表
+      parameters:
+      - default: US
+        description: 地区代码
+        in: query
+        name: regionCode
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'categories: array'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取视频分类
+      tags:
+      - youtube
+  /youtube/check-auth-status:
+    get:
+      consumes:
+      - application/json
+      description: 检查当前用户的YouTube授权状态
+      parameters:
+      - description: 用户ID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'authorized: bool, message: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 检查YouTube授权状态
+      tags:
+      - youtube
+  /youtube/feed/refresh:
+    get:
+      consumes:
+      - application/json
+      description: 手动触发刷新用户订阅频道的最新视频
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 手动刷新订阅频道
+      tags:
+      - youtube
+  /youtube/feed/videos:
+    get:
+      consumes:
+      - application/json
+      description: 获取订阅频道的最新视频（支持分页）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'videos: array, total: int, page: int'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取最新视频列表
+      tags:
+      - youtube
+  /youtube/oauth/callback:
+    get:
+      consumes:
+      - application/json
+      description: 交换授权码获取访问令牌并保存用户订阅信息
+      parameters:
+      - description: 授权码
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: 状态值
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: 重定向到前端
+          schema:
+            type: string
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 处理YouTube OAuth回调
+      tags:
+      - youtube
+  /youtube/search/{keyword}:
+    get:
+      consumes:
+      - application/json
+      description: 使用YouTube API v3根据关键字搜索视频
+      parameters:
+      - description: 搜索关键字
+        in: path
+        name: keyword
+        required: true
+        type: string
+      - default: 10
+        description: 最大结果数量(1-50)
+        in: query
+        name: maxResults
+        type: integer
+      - default: relevance
+        description: 排序方式
+        in: query
+        name: order
+        type: string
+      - default: video
+        description: 搜索类型
+        in: query
+        name: type
+        type: string
+      - default: any
+        description: 视频时长
+        in: query
+        name: videoDuration
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'videos: array'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 根据关键字搜索YouTube视频
+      tags:
+      - youtube
+  /youtube/trending:
+    post:
+      consumes:
+      - application/json
+      description: 获取YouTube热门视频列表
+      parameters:
+      - description: 热门视频请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.TrendingVideosRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'videos: array'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取热门视频
+      tags:
+      - youtube
+  /youtube/video/{videoId}:
+    get:
+      consumes:
+      - application/json
+      description: 根据视频ID获取YouTube视频详细信息
+      parameters:
+      - description: 视频ID
+        in: path
+        name: videoId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'video: object'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 'error: string'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取视频详情
+      tags:
+      - youtube
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

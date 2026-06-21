@@ -1,5 +1,5 @@
 {
-  "name": "bili-up-web",
+  "name": "ytb2bili-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,28 +9,33 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.9",
-    "@tanstack/react-query": "^5.62.8",
-    "axios": "^1.7.9",
+    "@radix-ui/react-select": "^2.2.6",
+    "@types/qrcode": "^1.5.6",
+    "axios": "^1.7.0",
     "clsx": "^2.1.1",
-    "firebase": "^12.8.0",
-    "lucide-react": "^0.468.0",
-    "next": "15.5.4",
+    "firebase": "^10.12.0",
+    "lucide-react": "^0.394.0",
+    "next": "^14.2.0",
+    "page-agent": "^1.5.7",
+    "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.5.4",
-    "zustand": "^5.0.2"
+    "react-hot-toast": "^2.6.0",
+    "react-icons": "^5.5.0",
+    "react-player": "^3.4.0",
+    "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^8",
-    "eslint-config-next": "15.5.4",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "@types/node": "^20.12.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "cross-env": "^10.1.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5"
   }
 }

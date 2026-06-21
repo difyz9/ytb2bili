@@ -1,0 +1,312 @@
+name: Minimal Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: web/package-lock.json
+
+    - name: Build Frontend
+      env:
+        # API 配置 - 使用相对路径，支持任何部署环境
+        NEXT_PUBLIC_API_URL: ''
+        # Firebase 配置 - 如果不使用 Firebase 可以留空
+        NEXT_PUBLIC_FIREBASE_API_KEY: 'AIzaSyDV1gZstB7ti4KoFnAojqrPd6LcuYQgFWQ'
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'ytb2bili-a24d9.firebaseapp.com'
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: 'ytb2bili-a24d9'
+        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: 'ytb2bili-a24d9.firebasestorage.app'
+        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '952644868894'
+        NEXT_PUBLIC_FIREBASE_APP_ID: '1:952644868894:web:fedd6dd8e7b22f66b3c70f'
+        
+      run: |
+        echo "📦 安装前端依赖..."
+        cd web && npm ci
+        echo "🔨 构建前端静态文件（环境变量已内嵌）..."
+        npm run build
+        echo "✅ 前端已构建到 internal/server/out/"
+        ls -la ../internal/server/out/ || echo "⚠️  out 目录不存在"
+
+    - name: Get version
+      id: version
+      run: |
+        echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        echo "commit_sha=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
+        echo "build_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+    - name: Build all platforms
+      run: |
+        # Build variables
+        VERSION="${{ steps.version.outputs.version }}"
+        BUILD_TIME="${{ steps.version.outputs.build_time }}"
+        COMMIT_SHA="${{ steps.version.outputs.commit_sha }}"
+        
+        echo "📦 构建信息:"
+        echo "  版本号:      $VERSION"
+        echo "  构建时间:    $BUILD_TIME"
+        echo "  Commit SHA:  $COMMIT_SHA"
+        
+        # LDFLAGS with version info
+        LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.CommitSHA=${COMMIT_SHA}'"
+        
+        # Windows
+        echo "🔨 构建 Windows amd64..."
+        GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o ytb2bili-windows-amd64.exe .
+        
+        # Linux
+        echo "🔨 构建 Linux amd64..."
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o ytb2bili-linux-amd64 .
+        echo "🔨 构建 Linux arm64..."
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o ytb2bili-linux-arm64 .
+        
+        # macOS
+        echo "🔨 构建 macOS amd64..."
+        GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o ytb2bili-darwin-amd64 .
+        echo "🔨 构建 macOS arm64..."
+        GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o ytb2bili-darwin-arm64 .
+        
+        echo "✅ 所有平台构建完成"
+
+    - name: Verify embedded frontend
+      run: |
+        echo "🔍 验证前端文件已嵌入..."
+        if [ -d "internal/server/out" ]; then
+          echo "✅ 前端文件已准备就绪"
+          du -sh internal/server/out
+          find internal/server/out -type f | wc -l | xargs echo "文件数:"
+        else
+          echo "❌ 错误: 前端文件未构建"
+          exit 1
+        fi
+
+    - name: Create packages
+      run: |
+        # Create directories
+        mkdir -p packages
+        
+        # Copy config template
+        cp config.toml.example config.toml
+        
+        # Create setup instructions
+        cat > QUICK_START.txt << 'EOFTEXT'
+        YTB2BILI Quick Start Guide
+        ========================
+        
+        Step 1 - Edit Configuration
+          Open config.toml and set required parameters
+          - Bilibili SESSDATA (cookie)
+          - YouTube API Key (optional)
+          - Other service configurations
+        
+        Step 2 - Start Service
+          Windows - Double click start.bat
+          Linux/macOS - Run ./start.sh
+        
+        Step 3 - Access Service
+          Open browser http://localhost:8096
+        
+        Step 4 - Get Help
+          - Documentation https://github.com/difyz9/ytb2bili
+          - Issues https://github.com/difyz9/ytb2bili/issues
+          - QQ Group 773066052
+        
+        Note - Full web interface is embedded, no separate deployment needed!
+        EOFTEXT
+        
+        # Windows package
+        mkdir -p win64
+        cp ytb2bili-windows-amd64.exe win64/
+        cp config.toml win64/
+        cp README.md win64/
+        cp QUICK_START.txt win64/
+        cat > win64/start.bat << 'EOFBAT'
+        @echo off
+        echo Starting YTB2BILI Server...
+        echo ================================
+        echo Frontend embedded - no separate deployment needed
+        echo Access at http://localhost:8096
+        echo ================================
+        ytb2bili-windows-amd64.exe
+        pause
+        EOFBAT
+        cd win64 && zip -r ../packages/ytb2bili-windows-amd64.zip . && cd ..
+        
+        # Linux amd64 package
+        mkdir -p linux64
+        cp ytb2bili-linux-amd64 linux64/
+        cp config.toml linux64/
+        cp README.md linux64/
+        cp QUICK_START.txt linux64/
+        cat > linux64/start.sh << 'EOFSH'
+        #!/bin/bash
+        echo "Starting YTB2BILI Server..."
+        echo "================================"
+        echo "Frontend embedded - no separate deployment needed"
+        echo "Access at http://localhost:8096"
+        echo "================================"
+        chmod +x ./ytb2bili-linux-amd64
+        ./ytb2bili-linux-amd64
+        EOFSH
+        chmod +x linux64/start.sh
+        tar -czf packages/ytb2bili-linux-amd64.tar.gz -C linux64 .
+        
+        # Linux ARM64 package
+        mkdir -p linux-arm64
+        cp ytb2bili-linux-arm64 linux-arm64/
+        cp config.toml linux-arm64/
+        cp README.md linux-arm64/
+        cp QUICK_START.txt linux-arm64/
+        cat > linux-arm64/start.sh << 'EOFSH2'
+        #!/bin/bash
+        echo "Starting YTB2BILI Server..."
+        echo "================================"
+        echo "Frontend embedded - no separate deployment needed"
+        echo "Access at http://localhost:8096"
+        echo "================================"
+        chmod +x ./ytb2bili-linux-arm64
+        ./ytb2bili-linux-arm64
+        EOFSH2
+        chmod +x linux-arm64/start.sh
+        tar -czf packages/ytb2bili-linux-arm64.tar.gz -C linux-arm64 .
+        
+        # macOS Intel package
+        mkdir -p macos-intel
+        cp ytb2bili-darwin-amd64 macos-intel/
+        cp config.toml macos-intel/
+        cp README.md macos-intel/
+        cp QUICK_START.txt macos-intel/
+        cat > macos-intel/start.sh << 'EOFSH3'
+        #!/bin/bash
+        echo "Starting YTB2BILI Server..."
+        echo "================================"
+        echo "Frontend embedded - no separate deployment needed"
+        echo "Access at http://localhost:8096"
+        echo "================================"
+        chmod +x ./ytb2bili-darwin-amd64
+        ./ytb2bili-darwin-amd64
+        EOFSH3
+        chmod +x macos-intel/start.sh
+        tar -czf packages/ytb2bili-darwin-amd64.tar.gz -C macos-intel .
+        
+        # macOS Apple Silicon package
+        mkdir -p macos-arm64
+        cp ytb2bili-darwin-arm64 macos-arm64/
+        cp config.toml macos-arm64/
+        cp README.md macos-arm64/
+        cp QUICK_START.txt macos-arm64/
+        cat > macos-arm64/start.sh << 'EOFSH4'
+        #!/bin/bash
+        echo "Starting YTB2BILI Server..."
+        echo "================================"
+        echo "Frontend embedded - no separate deployment needed"
+        echo "Access at http://localhost:8096"
+        echo "================================"
+        chmod +x ./ytb2bili-darwin-arm64
+        ./ytb2bili-darwin-arm64
+        EOFSH4
+        chmod +x macos-arm64/start.sh
+        tar -czf packages/ytb2bili-darwin-arm64.tar.gz -C macos-arm64 .
+        
+        # List packages
+        ls -la packages/
+
+    - name: Generate changelog
+      run: |
+        cat > CHANGELOG.md << EOFCHANGELOG
+        ## YTB2BILI Release ${{ steps.version.outputs.version }}
+        
+        ### Build Information
+        
+        - **Version**: ${{ steps.version.outputs.version }}
+        - **Build Time**: ${{ steps.version.outputs.build_time }}
+        - **Commit SHA**: ${{ steps.version.outputs.commit_sha }}
+        - **Go Version**: $(go version | awk '{print $3}')
+        
+        ### Key Features
+        
+        - Frontend Fully Embedded - Ready to use out of the box
+        - Single executable with complete Web UI
+        - Download, extract and run - zero configuration
+        
+        ### Downloads
+        
+        | Platform | Arch | Download | Size |
+        |----------|------|----------|------|
+        | Windows | x64 | [ytb2bili-windows-amd64.zip](https://github.com/difyz9/ytb2bili/releases/download/${{ steps.version.outputs.version }}/ytb2bili-windows-amd64.zip) | $(du -h packages/ytb2bili-windows-amd64.zip | cut -f1) |
+        | Linux | x64 | [ytb2bili-linux-amd64.tar.gz](https://github.com/difyz9/ytb2bili/releases/download/${{ steps.version.outputs.version }}/ytb2bili-linux-amd64.tar.gz) | $(du -h packages/ytb2bili-linux-amd64.tar.gz | cut -f1) |
+        | Linux | ARM64 | [ytb2bili-linux-arm64.tar.gz](https://github.com/difyz9/ytb2bili/releases/download/${{ steps.version.outputs.version }}/ytb2bili-linux-arm64.tar.gz) | $(du -h packages/ytb2bili-linux-arm64.tar.gz | cut -f1) |
+        | macOS | Intel | [ytb2bili-darwin-amd64.tar.gz](https://github.com/difyz9/ytb2bili/releases/download/${{ steps.version.outputs.version }}/ytb2bili-darwin-amd64.tar.gz) | $(du -h packages/ytb2bili-darwin-amd64.tar.gz | cut -f1) |
+        | macOS | Apple Silicon | [ytb2bili-darwin-arm64.tar.gz](https://github.com/difyz9/ytb2bili/releases/download/${{ steps.version.outputs.version }}/ytb2bili-darwin-arm64.tar.gz) | $(du -h packages/ytb2bili-darwin-arm64.tar.gz | cut -f1) |
+        
+        ### Quick Start
+        
+        1. Download the package for your platform
+        2. Extract to any directory
+        3. Configure - Edit config.toml (see QUICK_START.txt)
+        4. Start - Run start.sh or start.bat
+        5. Access http://localhost:8096 - Full Web UI embedded
+        
+        ### Features
+        
+        - YouTube video auto-download
+        - AI subtitle generation (Whisper)
+        - Smart subtitle translation (Baidu/DeepSeek)
+        - AI metadata generation
+        - Auto-upload to Bilibili
+        - Smart scheduling
+        - Modern Web UI (embedded)
+        
+        ### System Requirements
+        
+        - Memory 4GB+ recommended (for video processing)
+        - Storage 10GB+ recommended (for video cache)
+        - Network Stable internet connection
+        - Browser Chrome/Firefox/Safari/Edge (for Web UI)
+        
+        ### Help and Support
+        
+        - Documentation https://github.com/difyz9/ytb2bili/blob/main/README.md
+        - Issues https://github.com/difyz9/ytb2bili/issues
+        - QQ Group 773066052
+        
+        ---
+        Build Time $(date -u '+%Y-%m-%d %H:%M:%S') UTC  
+        Go Version $(go version)  
+        Frontend Next.js (embedded)
+        EOFCHANGELOG
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: Release ${{ steps.version.outputs.version }}
+        body_path: CHANGELOG.md
+        files: packages/*
+        draft: false
+        prerelease: false
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

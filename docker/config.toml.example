@@ -12,6 +12,25 @@ port = 8096                # 服务端口
 static_dir = "./downloads" # 静态文件目录（视频、字幕等）
 static_path = "/static"    # 静态文件访问路径前缀
 
+[auth]
+jwt_secret = "change-this-local-jwt-secret"
+access_token_ttl = 7200
+refresh_token_ttl = 604800
+
+# 预定义登录账号
+# 请自定义的账号/密码
+[[auth.users]]
+email = "admin@126.com"
+password = "admin123"
+
+
+# 不要修改
+[api_auth]
+enabled = false
+app_id = "ytb2bili_extension"
+app_secret = "ytb2bili_secret_2026"
+cookies_decrypt_key = "59e7052041ce4bd6aff82f6a0bca9cde"
+
 
 # ============================================================================
 # 数据库配置
@@ -41,55 +60,27 @@ ytdlp_path = "/usr/local/bin/yt-dlp"
 
 # ffmpeg 可执行文件路径（可选，默认从 PATH 查找）
 ffmpeg_path = "/usr/bin/ffmpeg"
-# Cookies 文件路径（可选，用于下载受限视频）
-# cookies_file = "/path/to/cookies.txt"
 
-# 代理地址（可选，用于加速下载）
-# proxy_url = "http://127.0.0.1:7890"
-
-# 微软语音服务配置（可选，用于旧版翻译功能）
-# speech_key = "your_azure_speech_key"
-# speech_region = "eastasia"
-
-# LLM 翻译配置
-llm_translation_enabled = true      # 是否启用 LLM 批量翻译（推荐，替代微软翻译）
-llm_translation_batch_size = 25      # 批量翻译每批句子数
-llm_translation_max_workers = 3      # 并发工作者数量
-llm_translation_context_size = 2     # 上下文窗口大小
-llm_translation_source_lang = "en"   # 源语言代码
-llm_translation_target_lang = "zh-Hans"  # 目标语言代码
-
-# TTS 字幕音频合成配置
-tts_enabled = false  # 是否启用字幕音频合成
-
-# ============================================================================
-# Agent & LLM 配置
-# ============================================================================
-[agent]
-name = "agent"  # Agent 名称
+# 水印字体文件路径（可选；用于非会员水印 drawtext fontfile）
+watermark_font_file = "/app/fonts/watermark.ttf"
 
 
-# ============================================================================
-# 自动更新配置
-# ============================================================================
-[updater]
-enabled = true         # 是否启用更新检查
-auto_update = false    # 是否自动更新（建议设为 false，手动更新更安全）
-check_interval = 24    # 检查更新间隔（小时），0 表示禁用
-# update_url = "https://api.github.com/repos/zolagz/ytb2bili/releases/latest"
-# current_version = "0.0.1"
+[llm]
+provider = "deepseek"              # 服务商: openai, deepseek, ollama, qwen, zhipu, groq, custom
+base_url = "https://api.deepseek.com"  # API 端点地址（OpenAI 兼容接口）
+api_key = "sk-xxxx"
+models = ["deepseek-v4-flash", "deepseek-chat", "deepseek-reasoner"] # 前端可选模型列表
+temperature = 0.7                # 温度参数 (0.0-2.0)
+max_tokens = 24096                # 每次请求最大 token 数
+timeout = 300                    # 请求超时（秒）
+
+
 
 
 
 # ============================================================================
-# 腾讯云 COS 存储配置（可选，用于云端存储）
+# Azure TTS 语音合成配置（用户自行配置）
 # ============================================================================
-[tencos]
-enabled = false  # 是否启用腾讯云 COS 存储
-# cos_bucket_url = "https://your-bucket.cos.ap-guangzhou.myqcloud.com"
-# cos_secret_id = "your_secret_id"
-# cos_secret_key = "your_secret_key"
-# cos_region = "ap-guangzhou"
-# cos_bucket = "your-bucket-name"
-# sub_app_id = "your_app_id"
-
+[azure_tts]
+subscription_key = ""            # Azure Speech Services 订阅密钥
+region = ""              # Azure 区域

@@ -1,33 +1,33 @@
-FROM difyz9/ytb2bili-base
+FROM difyz9/ytb2bili-base:latest
 
-# 默认跟随 GitHub 最新 Release，也允许在构建时手动覆盖
-ARG VERSION=latest
+ARG APP_BINARY=ytb2bili-linux-arm64
 
 LABEL maintainer="difyz9" \
-      image="difyz9/ytb2bili" \
-    version="${VERSION}"
-
-# Docker 自动设置目标架构 (amd64 / arm64)
-ARG TARGETARCH
+      image="difyz9/ytb2bili"
 
 WORKDIR /app
 
-# 从 GitHub Releases 下载对应架构的压缩包并解压
-RUN ARCHIVE="ytb2bili-linux-${TARGETARCH}.tar.gz" \
-    && if [ "${VERSION}" = "latest" ]; then \
-       URL="https://github.com/difyz9/ytb2bili/releases/latest/download/${ARCHIVE}"; \
-     else \
-       URL="https://github.com/difyz9/ytb2bili/releases/download/${VERSION}/${ARCHIVE}"; \
-     fi \
-    && echo "Downloading ${URL}" \
-    && curl -fsSL "${URL}" -o "/tmp/${ARCHIVE}" \
-    && tar -xzf "/tmp/${ARCHIVE}" -C /tmp \
-    && mv "/tmp/ytb2bili-linux-${TARGETARCH}/ytb2bili-linux-${TARGETARCH}" ./ytb2bili \
-    && rm -rf "/tmp/${ARCHIVE}" "/tmp/ytb2bili-linux-${TARGETARCH}" \
-    && chmod +x ./ytb2bili
+# 注入 Asia/Shanghai 时区文件（无需 apt-get tzdata）
+RUN mkdir -p /usr/share/zoneinfo/Asia
+COPY Shanghai.zone /usr/share/zoneinfo/Asia/Shanghai
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 
-# 创建数据目录
-RUN mkdir -p ./logs ./downloads
+# 更新 yt-dlp 至最新版本（修复 YouTube n-challenge 兼容性问题）
+RUN yt-dlp -U || pip install -U yt-dlp || true
+
+
+# 复制与目标平台匹配的可执行文件和配置文件
+COPY ${APP_BINARY} ./ytb2bili
+
+COPY config.toml ./config.toml
+
+# Optional: watermark fonts (place ttf/otf under docker/fonts/)
+COPY fonts/ ./fonts/
+
+# 创建数据目录并赋予执行权限
+RUN mkdir -p ./data ./downloads \
+    && chmod +x ./ytb2bili
 
 EXPOSE 8096
 

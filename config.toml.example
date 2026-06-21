@@ -8,38 +8,47 @@
 
 [server]
 host = "0.0.0.0"           # 服务监听地址，0.0.0.0 表示监听所有网卡
-port = 5688                # 服务端口
+port = 8096                # 服务端口
 static_dir = "./downloads" # 静态文件目录（视频、字幕等）
 static_path = "/static"    # 静态文件访问路径前缀
+
+[auth]
+jwt_secret = "change-this-local-jwt-secret"
+access_token_ttl = 7200
+refresh_token_ttl = 604800
+
+# 可以自定义登录账号
+[[auth.users]]
+email = "admin@126.com"
+password = "123456"
+
+
+
+
+##  这里不要改
+[api_auth]
+enabled = false
+app_id = "ytb2bili_extension"
+app_secret = "ytb2bili_secret_2026"
+cookies_decrypt_key = "59e7052041ce4bd6aff82f6a0bca9cde"
 
 
 # ============================================================================
 # 数据库配置
 # ============================================================================
 [database]
-type = "sqlite"             # 数据库类型: sqlite, mysql, postgresql
-path = "ytb2bili.db"        # SQLite 数据库文件路径
-auto_migrate = true         # 是否自动迁移数据库表结构
-table_prefix = ""           # 表名前缀（可选）
+type = "mysql"
+host = "mysql"                 # Docker Compose 服务名
+port = 3306
+user = "ytb2bili"              # 与 docker-compose.yml 一致
+password = "ytb2bili@123"
+dbname = "bili_up"             # 数据库名（注意是 dbname 不是 database）
+sslmode = ""                   # MySQL 不使用（仅 PostgreSQL 需要）
+timezone = "Asia/Shanghai"     # 时区配置
+auto_migrate = true
+table_prefix = ""
 
-# MySQL 配置示例（取消注释并修改以使用 MySQL）
-# type = "mysql"
-# host = "127.0.0.1"
-# port = 3306
-# user = "root"
-# password = "your_password"
-# dbname = "ytb2ibili"
-# timezone = "Asia/Shanghai"
 
-# PostgreSQL 配置示例（取消注释并修改以使用 PostgreSQL）
-# type = "postgresql"
-# host = "127.0.0.1"
-# port = 5432
-# user = "postgres"
-# password = "your_password"
-# dbname = "ytb2bili"
-# sslmode = "disable"
-# timezone = "UTC"
 
 # ============================================================================
 # 视频处理工作流配置
@@ -51,91 +60,28 @@ download_dir = "./downloads"  # 视频下载目录（必需，应与 server.stat
 ytdlp_path = "/usr/local/bin/yt-dlp"
 
 # ffmpeg 可执行文件路径（可选，默认从 PATH 查找）
-ffmpeg_path = "/usr/local/bin/ffmpeg"
+ffmpeg_path = "/usr/bin/ffmpeg"
+
+# 水印字体文件路径（可选；用于非会员水印 drawtext fontfile）
+watermark_font_file = "/app/fonts/watermark.ttf"
 
 
-# 代理地址（可选，用于加速下载）
-# proxy_url = "http://127.0.0.1:7890"
-
-# 微软语音服务配置（可选，用于旧版翻译功能）
-# speech_key = "your_azure_speech_key"
-# speech_region = "eastasia"
-
-# LLM 翻译配置
-llm_translation_enabled = false      # 是否启用 LLM 批量翻译（推荐，替代微软翻译）
-llm_translation_batch_size = 25      # 批量翻译每批句子数
-llm_translation_max_workers = 3      # 并发工作者数量
-llm_translation_context_size = 2     # 上下文窗口大小
-llm_translation_source_lang = "en"   # 源语言代码
-llm_translation_target_lang = "zh-Hans"  # 目标语言代码
-
-# TTS 字幕音频合成配置
-tts_enabled = false  # 是否启用字幕音频合成
-
-# ============================================================================
-# Agent & LLM 配置
-# ============================================================================
-[agent]
-name = "ytb2bili_agent"  # Agent 名称
-
-[agent.llm]
-provider = "openai"                      # LLM 提供商: openai, deepseek, openrouter 等
-api_key = "your_api_key_here"            # LLM API 密钥（必需）
-model = "gpt-4"                          # 使用的模型名称
-# base_url = "https://api.openai.com/v1"  # 自定义 API 地址（可选）
-
-# OpenRouter 示例
-# provider = "openrouter"
-# api_key = "sk-or-v1-..."
-# base_url = "https://openrouter.ai/api/v1"
-# model = "anthropic/claude-3-sonnet"
-
-# DeepSeek 示例
-# provider = "deepseek"
-# api_key = "sk-..."
-# base_url = "https://api.deepseek.com/v1"
-# model = "deepseek-chat"
-
-
-
-# Google Gemini 示例（base_url 可省略，程序自动设置 OpenAI 兼容端点）
-# provider = "gemini"
-# api_key = "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-# model = "gemini-2.0-flash"   # 可选: gemini-2.0-flash, gemini-1.5-pro, gemini-2.0-flash-thinking-exp
-# base_url = "https://generativelanguage.googleapis.com/v1beta/openai"  # 可省略，程序自动填充
-
-
+[llm]
+provider = "deepseek"              # 服务商: openai, deepseek, ollama, qwen, zhipu, groq, custom
+base_url = "https://api.deepseek.com"  # API 端点地址（OpenAI 兼容接口）
+api_key = "sk-xxxxxxxxxxxx"
+models = ["deepseek-v4-flash", "deepseek-chat", "deepseek-reasoner"] # 前端可选模型列表
+temperature = 0.7                # 温度参数 (0.0-2.0)
+max_tokens = 24096                # 每次请求最大 token 数
+timeout = 300                    # 请求超时（秒）
 
 
 
 
 
 # ============================================================================
-# 自动更新配置
+# Azure TTS 语音合成配置（用户自行配置）
 # ============================================================================
-[updater]
-enabled = true         # 是否启用更新检查
-auto_update = false    # 是否自动更新（建议设为 false，手动更新更安全）
-check_interval = 24    # 检查更新间隔（小时），0 表示禁用
-# update_url = "https://api.github.com/repos/zolagz/ytb2bili/releases/latest"
-# current_version = "0.0.1"
-
-# ============================================================================
-# TTS 服务配置（可选，用于语音合成）
-# ============================================================================
-[tts]
-# base_url = "https://tts-api.com"
-# app_id = "your_app_id"
-# app_secret = "your_app_secret"
-
-# ============================================================================
-# 腾讯云 COS 存储配置（可选，用于云端存储）
-# ============================================================================
-[tencos]
-enabled = false  # 是否启用腾讯云 COS 存储
-# cos_bucket_url = "https://your-bucket.cos.ap-guangzhou.myqcloud.com"
-# cos_secret_id = "your_secret_id"
-# cos_secret_key = "your_secret_key"
-# cos_region = "ap-guangzhou"
-# cos_bucket = "your-bucket-name"
-# sub_app_id = "your_app_id"
+[azure_tts]
+subscription_key = ""            # Azure Speech Services 订阅密钥
+region = ""              # Azure 区域

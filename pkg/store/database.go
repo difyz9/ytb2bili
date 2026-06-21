@@ -1,11 +1,11 @@
 package store
 
 import (
-	"github.com/difyz9/ytb2bili/internal/core/types"
-	"github.com/difyz9/ytb2bili/pkg/store/model"
 	"fmt"
 	"time"
 
+	"github.com/zolagz/ytb2bili/internal/config"
+	"go.uber.org/fx"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,65 +13,71 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-// NewDatabase 创建数据库连接
-func NewDatabase(config *types.AppConfig) (*gorm.DB, error) {
-	// GORM配置
+// Module provides the database connection
+var Module = fx.Options(
+	fx.Provide(
+		NewDatabase,
+	),
+)
+
+// NewDatabase creates a new GORM database connection.
+// Supported: postgres/mysql/sqlite.
+func NewDatabase(appCfg *config.AppConfig) (*gorm.DB, error) {
+	// GORM configuration
 	gormConfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "tb_", // crypto_wallet prefix
+			TablePrefix:   appCfg.Database.TablePrefix,
 			SingularTable: false,
 		},
+		DisableForeignKeyConstraintWhenMigrating: true, // 禁用自动外键约束（使用字符串UID而非自增ID）
 	}
 
-	// 设置日志级别
-	if config.Debug {
+	// Logging
+	if appCfg.Debug {
 		gormConfig.Logger = logger.Default.LogMode(logger.Info)
 	} else {
 		gormConfig.Logger = logger.Default.LogMode(logger.Silent)
 	}
 
-	// 根据数据库类型创建连接
-	var db *gorm.DB
-	var err error
+	// Create connection
+	var (
+		db  *gorm.DB
+		err error
+	)
 
-	switch config.Database.Type {
+	switch appCfg.Database.Type {
 	case "postgres", "postgresql":
-		dsn := config.Database.GetDSN()
+		dsn := appCfg.Database.GetDSN()
 		db, err = gorm.Open(postgres.Open(dsn), gormConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)
 		}
 	case "mysql":
-
-		dsn := config.Database.GetDSN()
+		dsn := appCfg.Database.GetDSN()
 		db, err = gorm.Open(mysql.Open(dsn), gormConfig)
-
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to MySQL: %w", err)
 		}
 	default:
-		return nil, fmt.Errorf("unsupported database type: %s (supported: postgres, mysql)", config.Database.Type)
+		return nil, fmt.Errorf("unsupported database type: %s (supported: postgres, mysql)", appCfg.Database.Type)
 	}
 
-	// 获取底层的sql.DB对象
+	// Connection pool
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
 	}
 
-	// 设置连接池参数
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	return db, nil
-}
+	// 自动迁移表结构
+	fmt.Println("🚀 开始数据库迁移...")
+	if err := MigrateDatabase(db); err != nil {
+		return nil, fmt.Errorf("数据库迁移失败: %w", err)
+	}
+	fmt.Println("✅ 数据库迁移完成!")
 
-// AutoMigrate 自动迁移数据库表
-func AutoMigrate(db *gorm.DB) error {
-	// 导入所有模型并执行迁移
-	return db.AutoMigrate(
-		&model.User{},
-		&model.SavedVideo{},
-	)
+	return db, nil
 }

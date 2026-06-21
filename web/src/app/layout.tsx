@@ -1,10 +1,13 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import RootLayoutClient from "@/components/layout/RootLayoutClient";
+import type { Metadata } from 'next';
+import './globals.css';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { I18nProvider } from '@/contexts/I18nContext';
+import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export const metadata: Metadata = {
-  title: "YTB2BILI Web - Bilibili 视频管理平台",
-  description: "一个用于管理 Bilibili 视频上传和字幕处理的 Web 平台",
+  title: 'ytb2bili - YouTube to Bilibili',
+  description: 'Video content management platform',
 };
 
 export default function RootLayout({
@@ -13,11 +16,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
-      <body className="min-h-screen bg-gray-50">
-        <RootLayoutClient>
-          {children}
-        </RootLayoutClient>
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body className="font-sans antialiased">
+        <I18nProvider>
+          <AuthProvider>
+            <ErrorBoundary>
+              {children}
+              <Toaster position="top-center" />
+            </ErrorBoundary>
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   );

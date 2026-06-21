@@ -1,321 +1,78 @@
 package main
 
 import (
-	"github.com/difyz9/ytb2bili/internal/chain_task"
-	"github.com/difyz9/ytb2bili/internal/core"
-	"github.com/difyz9/ytb2bili/internal/core/services"
-	"github.com/difyz9/ytb2bili/internal/core/types"
-	"github.com/difyz9/ytb2bili/internal/handler"
-	"github.com/difyz9/ytb2bili/internal/web"
-	"github.com/difyz9/ytb2bili/pkg/analytics"
-	"github.com/difyz9/ytb2bili/pkg/auth"
-	"github.com/difyz9/ytb2bili/pkg/cos"
-	"github.com/difyz9/ytb2bili/pkg/logger"
-	biliAccountService "github.com/difyz9/ytb2bili/pkg/services"
-	"github.com/difyz9/ytb2bili/pkg/store"
 	"context"
-	"github.com/gin-gonic/gin"
-	"github.com/robfig/cron/v3"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 	"log"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
 	"time"
+
+	_ "github.com/zolagz/ytb2bili/docs" // Swagger docs
+	"github.com/zolagz/ytb2bili/internal/bootstrap"
+	"github.com/zolagz/ytb2bili/internal/handler"
 )
-// # Unix/Linux/Mac
-// openssl rand -base64 32
 
-// AppLifecycle 应用程序生命周期
-type AppLifecycle struct {
-}
+// 构建信息（通过 -ldflags 注入）
+var (
+	Version   = "dev"      // 版本号
+	BuildTime = "unknown"  // 构建时间
+	CommitSHA = "unknown"  // Git commit SHA
+)
 
-// OnStart 应用程序启动时执行
-func (l *AppLifecycle) OnStart(context.Context) error {
-	log.Println("AppLifecycle OnStart")
-	return nil
-}
+// @title           YouTube to Bilibili API
+// @version         1.0
+// @description     API for downloading YouTube videos and uploading to Bilibili with AI-powered processing
+// @termsOfService  http://swagger.io/terms/
 
-// OnStop 应用程序停止时执行
-func (l *AppLifecycle) OnStop(context.Context) error {
-	log.Println("AppLifecycle OnStop")
-	return nil
-}
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      127.0.0.1:8096
+// @BasePath  /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
+	// 设置构建信息到 handler
+	handler.SetBuildInfo(Version, BuildTime, CommitSHA)
+	
+	// 打印版本信息
+	log.Printf("🚀 YTB2BILI 启动中... 版本: %s, 构建时间: %s\n", Version, BuildTime)
+	
+	// 创建应用（配置会自动加载）
+	app := bootstrap.NewApp()
 
-	configFile := os.Getenv("CONFIG_FILE")
-	if configFile == "" {
-		configFile = "config.toml"
+	// 启动应用（带超时）
+	startCtx, startCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer startCancel()
+
+	if err := app.Start(startCtx); err != nil {
+		log.Fatalf("❌ 应用启动失败: %v\n", err)
 	}
 
-	// 加载配置
-	config, err := types.LoadConfig(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	config.Path = configFile
+	log.Println("✅ 应用启动成功，按 Ctrl+C 停止...")
 
-	app := fx.New(
-		// 初始化配置应用配置
-		fx.Provide(func() *types.AppConfig {
-			return config
-		}),
+	// fx 内部订阅 SIGINT / SIGTERM，Done() 在收到信号后关闭
+	<-app.Done()
+	log.Println("\n🛑 收到终止信号，正在优雅关闭...")
 
-		// 日志模块
-		fx.Provide(func(config *types.AppConfig) (*zap.SugaredLogger, error) {
-			return logger.NewLogger(config.Debug)
-		}),
+	// 停止应用（带超时）
+	stopCtx, stopCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer stopCancel()
 
-		// 数据库模块
-		fx.Provide(store.NewDatabase),
-
-		// 核心模块
-		fx.Provide(core.NewServer),
-		fx.Provide(cos.NewCosClient),
-
-		// 分析客户端
-		fx.Provide(func(config *types.AppConfig, logger *zap.SugaredLogger) (*analytics.Client, error) {
-			if config.AnalyticsConfig == nil || !config.AnalyticsConfig.Enabled {
-				logger.Info("Analytics is disabled")
-				return nil, nil
-			}
-
-			analyticsConfig := &analytics.Config{
-				ServerURL:     config.AnalyticsConfig.ServerURL,
-				APIKey:        config.AnalyticsConfig.APIKey,
-				ProductID:     config.AnalyticsConfig.ProductID,
-				Debug:         config.AnalyticsConfig.Debug,
-				EncryptionKey: config.AnalyticsConfig.EncryptionKey,
-			}
-
-			return analytics.NewClient(analyticsConfig, logger)
-		}),
-
-		// 分析中间件
-		fx.Provide(func(client *analytics.Client, logger *zap.SugaredLogger) *analytics.Middleware {
-			return analytics.NewMiddleware(client, logger)
-		}),
-
-		// API 认证中间件
-		fx.Provide(func(config *types.AppConfig, logger *zap.SugaredLogger) *auth.Middleware {
-			// 如果配置了 AppID 和 AppSecret，启用认证
-			if config.APIAuth.AppID != "" && config.APIAuth.AppSecret != "" {
-				authConfig := &auth.Config{
-					Apps: map[string]string{
-						config.APIAuth.AppID: config.APIAuth.AppSecret,
-					},
-				}
-				logger.Infof("API Auth middleware enabled for app: %s", config.APIAuth.AppID)
-				return auth.NewMiddleware(authConfig, logger)
-			}
-			logger.Info("API Auth middleware disabled (no credentials configured)")
-			return auth.NewMiddleware(nil, logger)
-		}),
-
-		// 服务层
-		fx.Provide(services.NewVideoService),
-		fx.Provide(services.NewSavedVideoService),
-		fx.Provide(services.NewTaskStepService),
-		fx.Provide(biliAccountService.NewBilibiliAccountService),
-
-		// 注册cron
-		fx.Provide(func() *cron.Cron {
-			return cron.New(cron.WithSeconds())
-		}),
-
-		// fx.Provide(handler.NewCronHandler),
-		// fx.Invoke(func(h *handler.CronHandler) {
-		// 	h.SetUp()
-		// }),
-
-		// 生命周期管理
-		fx.Provide(func() *AppLifecycle {
-			return &AppLifecycle{}
-		}),
-
-		// 初始化数据库
-		fx.Invoke(func(db *gorm.DB, logger *zap.SugaredLogger) error {
-			logger.Info("Running database migrations...")
-			return store.MigrateDatabase(db)
-		}),
-
-
-		fx.Provide(chain_task.NewChainTaskHandler),
-		fx.Invoke(func(h *chain_task.ChainTaskHandler) {
-			// 设置并启动任务消费者（准备阶段：下载、字幕、翻译、元数据）
-			h.SetUp()
-		}),
-
-		// 添加上传调度器
-		fx.Provide(chain_task.NewUploadScheduler),
-		fx.Invoke(func(s *chain_task.UploadScheduler) {
-			// 设置并启动上传调度器（上传阶段：每小时上传视频，1小时后上传字幕）
-			s.SetUp()
-		}),
-
-		// 初始化应用服务器
-		fx.Invoke(func(server *core.AppServer, db *gorm.DB) {
-			server.Init(db)
-		}),
-
-		// 添加分析中间件
-		fx.Invoke(func(server *core.AppServer, analyticsMiddleware *analytics.Middleware, logger *zap.SugaredLogger) {
-			if analyticsMiddleware != nil {
-				server.Engine.Use(analyticsMiddleware.Handler())
-				logger.Info("Analytics middleware registered")
-			}
-		}),
-
-		// 注册 Handlers
-		fx.Provide(handler.NewAuthHandler),
-		fx.Invoke(func(h *handler.AuthHandler, server *core.AppServer, logger *zap.SugaredLogger) {
-			h.RegisterRoutes(server)
-			logger.Info("✓ Auth routes registered")
-		}),
-
-		fx.Provide(handler.NewUploadHandler),
-		fx.Invoke(func(h *handler.UploadHandler, server *core.AppServer, logger *zap.SugaredLogger) {
-			h.RegisterRoutes(server)
-			logger.Info("✓ Upload routes registered")
-		}),
-
-		fx.Provide(handler.NewCategoryHandler),
-		fx.Invoke(func(h *handler.CategoryHandler, server *core.AppServer, logger *zap.SugaredLogger) {
-			h.RegisterRoutes(server)
-			logger.Info("✓ Category routes registered")
-		}),
-
-		fx.Provide(handler.NewSubtitleHandler),
-		fx.Invoke(func(
-			h *handler.SubtitleHandler,
-			server *core.AppServer,
-			authMiddleware *auth.Middleware,
-			appConfig *types.AppConfig,
-			logger *zap.SugaredLogger,
-		) {
-			if authMiddleware.IsEnabled() {
-				// 获取 cookies 解密密钥
-				decryptKey := appConfig.APIAuth.CookiesDecryptKey
-				if decryptKey == "" {
-					logger.Warn("⚠️ Cookies decrypt key not configured, using default")
-					decryptKey = "07c6b76c-41fa-437d-8730-09f5279bb9dc"
-				}
-				h.RegisterRoutesWithAuth(server, authMiddleware, decryptKey)
-				logger.Info("✓ Subtitle routes registered with auth and decrypt middleware")
-			} else {
-				h.RegisterRoutes(server)
-				logger.Info("✓ Subtitle routes registered (auth disabled)")
-			}
-		}),
-
-		fx.Provide(handler.NewConfigHandler),
-		fx.Invoke(func(h *handler.ConfigHandler, server *core.AppServer, logger *zap.SugaredLogger) {
-			h.RegisterRoutes(server)
-			logger.Info("✓ Config routes registered")
-		}),
-
-		fx.Provide(handler.NewAccountsHandler),
-		fx.Invoke(func(h *handler.AccountsHandler, server *core.AppServer, logger *zap.SugaredLogger) {
-			h.RegisterRoutes(server.Engine.Group("/api/v1/accounts"))
-			logger.Info("✓ Accounts routes registered")
-		}),
-
-		fx.Provide(handler.NewAnalyticsHandler),
-		fx.Provide(handler.NewVideoHandler),
-		fx.Invoke(func(
-			h *handler.VideoHandler,
-			server *core.AppServer,
-			uploadScheduler *chain_task.UploadScheduler,
-			analyticsHandler *handler.AnalyticsHandler,
-			logger *zap.SugaredLogger,
-		) {
-			h.AnalyticsHandler = analyticsHandler
-			h.SetUploadScheduler(uploadScheduler)
-			h.RegisterRoutes(server.Engine.Group("/api/v1"))
-			logger.Info("✓ Video routes registered")
-		}),
-
-		// 健康检查和静态文件服务
-		fx.Invoke(func(server *core.AppServer, logger *zap.SugaredLogger) {
-			// 健康检查
-			server.Engine.GET("/health", func(c *gin.Context) {
-				c.JSON(200, gin.H{
-					"status":  "ok",
-					"message": "Bili Up Backend API is running",
-					"time":    time.Now().Format(time.RFC3339),
-				})
-			})
-
-			// 静态文件服务 (嵌入的前端文件)
-			logger.Info("Setting up embedded static file server...")
-			staticHandler := web.StaticFileHandler()
-
-			// 对于根路径和非 API 路径，提供静态文件
-			server.Engine.NoRoute(func(c *gin.Context) {
-				path := c.Request.URL.Path
-				// 如果不是 API 路径，提供静态文件
-				if !strings.HasPrefix(path, "/api/") && !strings.HasPrefix(path, "/health") {
-					staticHandler.ServeHTTP(c.Writer, c.Request)
-					return
-				}
-				// 否则返回 404
-				c.JSON(404, gin.H{
-					"code":    404,
-					"message": "API endpoint not found",
-				})
-			})
-
-			logger.Info("✓ Static file server configured")
-		}),
-
-		fx.Invoke(func(s *core.AppServer, db *gorm.DB) {
-			go func() {
-				err := s.Run()
-				if err != nil {
-					os.Exit(0)
-				}
-			}()
-		}),
-		// 注册生命周期回调函数
-		fx.Invoke(func(lifecycle fx.Lifecycle, lc *AppLifecycle) {
-			lifecycle.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					return lc.OnStart(ctx)
-				},
-				OnStop: func(ctx context.Context) error {
-					return lc.OnStop(ctx)
-				},
-			})
-		}),
-	)
-
-	// 启动应用程序
-	go func() {
-
-		if err := app.Start(context.Background()); err != nil {
-			log.Fatal(err)
-		}
-
-	}()
-
-	// 监听退出信号
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("🛑 Shutting down gracefully...")
-
-	// 关闭应用程序
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := app.Stop(ctx); err != nil {
-		log.Fatal(err)
+	if err := app.Stop(stopCtx); err != nil {
+		log.Printf("❌ 应用关闭出错: %v\n", err)
+		log.Fatal("强制退出")
 	}
 
-	log.Println("✅ Application stopped")
-
+	log.Println("✅ 应用已成功关闭")
 }
+
+//
+//yt-dlp: /usr/local/bin/yt-dlp
+//ffmpeg: /usr/bin/ffmpeg

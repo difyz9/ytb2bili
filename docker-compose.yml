@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  ytb2bili:
+    image: difyz9/ytb2bili-alpine:latest
+    container_name: ytb2bili-dev
+    working_dir: /workspace
+    volumes:
+      # 挂载项目源码到容器
+      - .:/workspace
+      # 挂载下载目录（持久化）
+      - ./downloads:/tmp/download/downloads
+      # 挂载 Go mod 缓存（加速构建）
+      - go-mod-cache:/go/pkg/mod
+      # 挂载构建缓存
+      - go-build-cache:/root/.cache/go-build
+    ports:
+      # 后端 API 端口
+      - "5688:5688"
+      # 前端开发服务器端口（如需要）
+      - "3000:3000"
+    environment:
+      # 从 .env 文件加载环境变量
+      - FIREBASE_ENABLED=${FIREBASE_ENABLED:-true}
+      - FIREBASE_CREDENTIALS_PATH=${FIREBASE_CREDENTIALS_PATH:-./trans-video-9a469-firebase-adminsdk-fbsvc-5694bd1985.json}
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-trans-video-9a469}
+      
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://api.ytb2bili.com}
+      
+      - HTTP_PORT=${HTTP_PORT:-5688}
+      
+      # Database
+      - DB_TYPE=${DB_TYPE:-mysql}
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-ytb2bili}
+      - DB_SSLMODE=${DB_SSLMODE:-disable}
+      - DB_TZ=${DB_TZ:-UTC}
+      - DB_TABLE_PREFIX=${DB_TABLE_PREFIX:-tb_}
+      - DB_AUTO_MIGRATE=${DB_AUTO_MIGRATE:-true}
+      
+      # Video Workflow
+      - WORKFLOW_DOWNLOAD_DIR=${WORKFLOW_DOWNLOAD_DIR:-/tmp/download/downloads}
+      - WORKFLOW_YTDLP_PATH=${WORKFLOW_YTDLP_PATH:-/usr/local/bin/yt-dlp}
+      - WORKFLOW_FFMPEG_PATH=${WORKFLOW_FFMPEG_PATH:-/usr/bin/ffmpeg}
+      - WORKFLOW_COOKIES_FILE=${WORKFLOW_COOKIES_FILE}
+      - WORKFLOW_COOKIES_DIR=${WORKFLOW_COOKIES_DIR:-/tmp/cookies}
+      - WORKFLOW_PROXY_URL=${WORKFLOW_PROXY_URL}
+      
+      # Microsoft Speech & Translator Service
+      - SPEECH_KEY=${SPEECH_KEY}
+      - SPEECH_REGION=${SPEECH_REGION:-eastus}
+      
+      # Go 环境
+      - CGO_ENABLED=1
+      - GOPROXY=https://goproxy.cn,direct
+      
+    # 使用 host 网络模式访问宿主机的 MySQL（可选）
+    # network_mode: "host"
+    extra_hosts:
+      # 允许容器访问宿主机服务
+      - "host.docker.internal:host-gateway"
+    
+    # 保持容器运行
+    tty: true
+    stdin_open: true
+    
+    # 默认启动命令（可以被 docker-compose run 覆盖）
+    command: bash
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  go-mod-cache:
+  go-build-cache:

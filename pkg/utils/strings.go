@@ -188,3 +188,13 @@ func StringToUint(s string) uint {
 	// 再转换为 uint
 	return uint(val)
 }
+
+// NormalizeResolution 标准化视频分辨率输入
+func NormalizeResolution(resolution string) string {
+	switch strings.TrimSpace(resolution) {
+	case "best", "720p", "1080p", "1440p", "2160p", "4k":
+		return strings.TrimSpace(resolution)
+	default:
+		return "best"
+	}
+}

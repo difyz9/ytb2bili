@@ -3,62 +3,59 @@ package model
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 // Platform 平台类型
 type Platform string
 
 const (
-	PlatformBilibili      Platform = "bilibili"       // B站
-	PlatformDouyin        Platform = "douyin"         // 抖音
-	PlatformYoutube       Platform = "youtube"        // YouTube
-	PlatformKuaishou      Platform = "kuaishou"       // 快手
-	PlatformWechatChannels Platform = "wechat_channels" // 微信视频号
+	PlatformBilibili Platform = "bilibili" // B站
+	PlatformDouyin   Platform = "douyin"   // 抖音
+	PlatformYoutube  Platform = "youtube"  // YouTube
+	PlatformKuaishou Platform = "kuaishou" // 快手
 )
 
 // BindingStatus 绑定状态
 type BindingStatus string
 
 const (
-	BindingStatusPending  BindingStatus = "pending"  // 等待绑定
-	BindingStatusBound    BindingStatus = "bound"    // 已绑定
-	BindingStatusExpired  BindingStatus = "expired"  // 已过期
-	BindingStatusUnbound  BindingStatus = "unbound"  // 已解绑
+	BindingStatusPending BindingStatus = "pending" // 等待绑定
+	BindingStatusBound   BindingStatus = "bound"   // 已绑定
+	BindingStatusExpired BindingStatus = "expired" // 已过期
+	BindingStatusUnbound BindingStatus = "unbound" // 已解绑
 )
 
 // AccountBinding 账号绑定表 - 多平台账号统一管理
 type AccountBinding struct {
-	ID          uint           `gorm:"primarykey" json:"id"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
-	
-	UserID       string        `gorm:"size:128;index;not null" json:"user_id"`    // Firebase用户ID
-	Platform     Platform      `gorm:"size:50;not null" json:"platform"`          // 平台类型
-	PlatformUID  string        `gorm:"size:100;not null" json:"platform_uid"`     // 平台用户ID
-	Username     string        `gorm:"size:255" json:"username"`                  // 平台用户名
-	Avatar       string        `gorm:"size:500" json:"avatar"`                    // 平台头像
-	AccessToken  string        `gorm:"type:text" json:"-"`                        // 访问令牌
-	RefreshToken string        `gorm:"type:text" json:"-"`                        // 刷新令牌
-	ExpiresAt    *time.Time    `json:"expires_at"`                                // 令牌过期时间
-	Status       BindingStatus `gorm:"size:20;default:pending" json:"status"`    // 绑定状态
-	
+	BaseModel
+	UserID       string        `gorm:"size:128;index;not null" json:"user_id"` // 用户ID
+	Platform     Platform      `gorm:"size:50;not null" json:"platform"`       // 平台类型
+	PlatformUID  string        `gorm:"size:100;not null" json:"platform_uid"`  // 平台用户ID
+	Username     string        `gorm:"size:255" json:"username"`               // 平台用户名
+	Avatar       string        `gorm:"size:500" json:"avatar"`                 // 平台头像
+	AccessToken  string        `gorm:"type:text" json:"-"`                     // 访问令牌
+	RefreshToken string        `gorm:"type:text" json:"-"`                     // 刷新令牌
+	ExpiresAt    *time.Time    `json:"expires_at"`                             // 令牌过期时间
+	Status       BindingStatus `gorm:"size:20;default:pending" json:"status"`  // 绑定状态
+
 	// 通用扩展字段
-	IsPrimary  bool       `gorm:"column:is_primary;default:false;index" json:"is_primary"`   // 是否为主账号（用于B站等平台）
-	LastUsedAt *time.Time `gorm:"column:last_used_at" json:"last_used_at"`                   // 最后使用时间
-	Cookies    string     `gorm:"column:cookies;type:text" json:"-"`                         // 加密的Cookies（B站专用）
-	
+	IsPrimary  bool       `gorm:"column:is_primary;default:false;index" json:"is_primary"` // 是否为主账号（用于B站等平台）
+	LastUsedAt *time.Time `gorm:"column:last_used_at" json:"last_used_at"`                 // 最后使用时间
+	Cookies    string     `gorm:"column:cookies;type:text" json:"-"`                       // 加密的Cookies（B站专用）
+
 	// 平台特定数据（JSON格式存储）
-	PlatformData *string `gorm:"column:platform_data;type:json" json:"platform_data,omitempty"` // 平台特定扩展数据
+	// 示例：{"bili_mid": 123456, "bili_level": 6, "bili_vip": true}
+	PlatformData *string `gorm:"column:platform_data;type:json" json:"platform_data,omitempty"` // 平台特定扩展数据（使用指针类型，nil时存储为NULL）
+
+	// 临时二维码相关字段（仅在绑定流程中使用）
+	//QRCode    string `gorm:"size:500" json:"qr_code,omitempty"`     // 绑定二维码URL
+	//QRCodeKey string `gorm:"size:255;index" json:"qr_code_key,omitempty"` // 二维码密钥
 }
 
 // TableName 指定表名
 func (AccountBinding) TableName() string {
-	return "account_bindings"
+	return "tb_account_bindings"
 }
 
 // IsExpired 检查令牌是否过期
@@ -87,7 +84,7 @@ func (ab *AccountBinding) GetBiliData() (*BiliPlatformData, error) {
 	if ab.Platform != PlatformBilibili || ab.PlatformData == nil || *ab.PlatformData == "" {
 		return nil, nil
 	}
-	
+
 	var data BiliPlatformData
 	if err := json.Unmarshal([]byte(*ab.PlatformData), &data); err != nil {
 		return nil, err
@@ -101,7 +98,7 @@ func (ab *AccountBinding) SetBiliData(data *BiliPlatformData) error {
 		ab.PlatformData = nil
 		return nil
 	}
-	
+
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -113,8 +110,7 @@ func (ab *AccountBinding) SetBiliData(data *BiliPlatformData) error {
 
 // parseIntSafe 安全地解析字符串为int64
 func parseIntSafe(s string) (int64, error) {
-	if s == "" {
-		return 0, fmt.Errorf("空字符串")
-	}
-	return strconv.ParseInt(s, 10, 64)
+	var result int64
+	_, err := fmt.Sscanf(s, "%d", &result)
+	return result, err
 }

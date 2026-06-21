@@ -1,115 +1,61 @@
 # ytb2bili
 
-[简体中文](README.zh-CN.md) | [English](README.en.md) | [日本語](README.ja.md)
+언어: [English](README.en.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-`ytb2bili`는 로컬 비디오 번역 재생과 YouTube에서 Bilibili로의 업로드를 지원하는 처리 시스템입니다. 웹 관리 화면, 작업 체인 오케스트레이션, 자막 처리, AI 문안 생성, 자막 음성 합성, 오디오와 비디오 동기화 미리보기, Bilibili 업로드, 자막 업로드 기능을 제공합니다.
+ytb2bili는 로컬 비디오 번역 재생과 YouTube에서 Bilibili로의 게시를 지원하는 워크플로 플랫폼입니다. Go 백엔드, Next.js 기반 웹 콘솔, 작업 오케스트레이션, 자막 처리, AI 메타데이터 생성, 자막 음성 합성, 동기 재생, Bilibili 업로드 자동화 기능을 제공합니다.
 
-비디오 튜토리얼: https://www.bilibili.com/video/BV1tCRTBBEJo
+## 이 프로젝트가 하는 일
 
-## 주요 기능
+- 로컬 비디오 또는 온라인 비디오 링크를 하나의 처리 파이프라인으로 가져옵니다.
+- 다운로드, 오디오 추출, 자막 생성, 자막 번역, 음성 합성을 자동으로 수행합니다.
+- Bilibili 업로드용 제목, 설명, 태그를 AI 지원으로 생성합니다.
+- 처리 완료 후 비디오와 자막을 Bilibili에 업로드합니다.
+- 웹 콘솔에서 작업 확인, 계정 연동, 재시도, 수동 업로드, AI 어시스턴트 작업을 수행할 수 있습니다.
 
-- 로컬 비디오용 번역 자막 및 더빙 음성 생성, 동기화 재생으로 검수 가능
-- YouTube에서 Bilibili까지의 전체 처리 흐름: 다운로드, 오디오 추출, 자막 생성, 번역, 메타데이터 생성, 업로드
-- 단계별 활성화 또는 비활성화가 가능한 작업 체인
-- AI 번역, 제목, 설명, 태그 생성, 음성 합성 지원
-- QR 로그인, 영상 업로드, 자막 업로드, 계정 관리 등 Bilibili 연동
-- Go 백엔드와 Next.js 프런트엔드 기반의 웹 관리 화면
+## 핵심 기능
 
-## 5분 Docker 배포
+- 로컬 비디오 번역 재생과 자막/음성 싱크 검수.
+- YouTube에서 Bilibili까지 이어지는 전체 처리 파이프라인.
+- 다운로드, 오디오 추출, 전사, 번역, 메타데이터 생성, 자막 음성 합성, 업로드를 개별적으로 제어할 수 있는 작업 체인.
+- Bilibili 계정 연동 및 게시 지원.
+- AI 기반 메타데이터 생성과 워크플로 보조 기능.
+- 작업 큐, 설정, 계정 관리, 이력 확인을 위한 웹 대시보드.
 
-가장 빠른 시작 방법은 Docker Compose입니다. 기본적으로 다음 두 서비스를 실행합니다.
+## 아키텍처 개요
 
-- `mysql`: 작업, 계정, 실행 데이터 저장
-- `ytb2bili`: 웹 관리자와 처리 서비스
+저장소는 크게 세 부분으로 구성됩니다.
 
-### 1. 준비 사항
-
-- Docker
-- Docker Compose
-
-### 2. 배포 파일 받기
-
-```bash
-git clone https://github.com/difyz9/ytb2bili-docker.git
-cd ytb2bili-docker
-docker compose up -d
-```
-
-### 3. 최소 설정
-
-기본 `[database]` 설정은 `docker-compose.yml`과 맞춰져 있습니다. 최소한 아래 설정은 유지하세요.
-
-```toml
-[server]
-host = "0.0.0.0"
-port = 8096
-static_dir = "./downloads"
-static_path = "/static"
-
-[database]
-type = "mysql"
-host = "mysql"
-port = 3306
-user = "ytb2bili"
-password = "ytb2bili@123"
-dbname = "bili_up"
-sslmode = ""
-timezone = "Asia/Shanghai"
-auto_migrate = true
-table_prefix = ""
-
-[workflow]
-download_dir = "./downloads"
-ytdlp_path = "/usr/local/bin/yt-dlp"
-ffmpeg_path = "/usr/bin/ffmpeg"
-
-# YouTube 접속에 프록시가 필요하면 추가:
-# proxy_url = "http://127.0.0.1:7890"
-```
-
-### 4. 서비스 시작
-
-```bash
-docker compose up -d
-docker compose logs -f
-```
-
-그다음 `http://localhost:8096`를 열면 됩니다.
-
-### 5. 기본 사용 방법
-
-1. 관리자 화면 열기
-2. Bilibili 앱으로 QR 로그인
-3. 작업을 생성하고 비디오 링크 붙여넣기
-4. 다운로드, 처리, 업로드가 끝날 때까지 대기
-
-자주 쓰는 명령:
-
-```bash
-docker compose ps
-docker compose restart
-docker compose down
-```
-
-Docker 관련 자세한 내용은 [docker/README.md](docker/README.md)를 참고하세요.
-
-## 아키텍처
-
-이 프로젝트는 크게 세 부분으로 구성됩니다.
-
-- 처리 엔진: Go 백엔드가 다운로드, 전사, 번역, 메타데이터 생성, 음성 합성, Bilibili 업로드, 자막 업로드를 담당
-- 관리 화면: Next.js 프런트엔드가 작업 패널, 설정, 계정 관리, 수동 업로드, 동기화 재생 검수를 담당
-- 실행 기반: `config.toml`, 데이터베이스, Docker 파일, 문서 체계
+- 처리 엔진: Go 서비스가 다운로드, 전사, 번역, 메타데이터 생성, 음성 합성, Bilibili 업로드, 작업 제어를 담당합니다.
+- 웹 콘솔: Next.js 프런트엔드가 관리 UI, AI 어시스턴트, 작업 화면, 계정 관리, 설정 화면을 제공합니다.
+- 실행 및 운영 자산: 설정 파일, Docker 자원, 운영 문서가 개발과 배포를 지원합니다.
 
 ## 저장소 구조
 
-- `internal/`: 백엔드 본체, 작업 체인, 처리 로직, 서비스 연결
-- `pkg/`: 재사용 가능한 패키지, Bilibili 연동, 유틸리티, 모델
-- `web/`: 웹 관리자 프런트엔드
-- `docker/`: Docker 빌드, 실행, 배포 파일
-- `bin/`: 예제 스크립트, 테스트 보조, 워크플로 파일
+- `internal/`: 백엔드 애플리케이션 코드, 라우팅, 워크플로, 영속성, 부트스트랩 로직.
+- `pkg/`: LLM 연동, 도구, Bilibili 관련 모듈, 공용 모델 등 재사용 가능한 패키지.
+- `web/`: 프런트엔드 애플리케이션.
+- `configs/`: 설정 예제와 관련 설명.
+- `docs/`: 기능, 배포, 아키텍처, 트러블슈팅 문서.
+- `docker/`: 컨테이너 빌드 및 실행 파일.
 
-## 로컬 개발
+## 사전 요구 사항
+
+권장 로컬 환경:
+
+- Go 1.20+
+- Node.js 18+
+- npm
+- MySQL 8+
+- ffmpeg
+- yt-dlp
+
+활성화하는 기능에 따라 다음도 필요할 수 있습니다.
+
+- API2Key 호환 백엔드 서비스
+- Microsoft Speech 자격 증명
+- DeepSeek 또는 기타 LLM 자격 증명
+
+## 빠른 시작
 
 ### 1. 저장소 클론
 
@@ -124,7 +70,18 @@ cd ytb2bili
 cp config.toml.example config.toml
 ```
 
-데이터베이스, 다운로드 디렉터리, API 키, 프록시 등을 환경에 맞게 채우세요. 시작점으로 [config.toml.example](config.toml.example)을 확인하면 됩니다.
+환경에 맞게 `config.toml` 을 수정하세요. 먼저 다음 항목을 확인하는 것이 좋습니다.
+
+- `server.*`
+- `database.*`
+- `workflow.*`
+- `api2key.*`
+- 필요 시 `deepseek.*`
+
+관련 문서:
+
+- [config.toml.example](config.toml.example)
+- [configs/README.md](configs/README.md)
 
 ### 3. 백엔드 실행
 
@@ -132,6 +89,8 @@ cp config.toml.example config.toml
 go mod download
 go run main.go
 ```
+
+기본 주소는 `http://localhost:8096` 입니다.
 
 ### 4. 프런트엔드 실행
 
@@ -141,56 +100,40 @@ npm install
 npm run dev
 ```
 
-### 5. 사용 흐름
+프런트엔드 개발 서버는 일반적으로 `http://localhost:3000` 에서 실행됩니다.
 
-1. 웹 관리자 화면 열기
-2. Bilibili 계정 로그인
-3. 로컬 비디오를 업로드해 번역 자막과 더빙 음성을 생성하고 동기화 재생으로 검수
-4. Chrome 확장 설치: https://api.github.com/repos/difyz9/ytb2bili_extension/releases/latest
-5. 임의의 YouTube 비디오 페이지를 열고 확장에서 링크 제출
-6. 관리자 화면에서 작업 상태와 로그 확인
-7. 필요 시 단계 재실행, 문안 수정, 수동 업로드 진행
+### 5. 일반적인 사용 흐름
 
-## 처리 흐름
+1. 웹 콘솔을 엽니다.
+2. Bilibili 계정을 연동합니다.
+3. 로컬 비디오를 업로드하거나 지원되는 비디오 링크를 제출합니다.
+4. 필요하면 자막, 번역, 음성을 검토합니다.
+5. 대시보드에서 작업 진행 상황을 확인합니다.
+6. 처리된 결과를 Bilibili에 게시합니다.
 
-1. 로컬 비디오를 가져오거나 YouTube 링크 제출
-2. 비디오와 썸네일 다운로드
-3. 오디오 추출
-4. 자막 생성
-5. 자막 번역
-6. 더빙 음성 합성 및 동기화 재생 미리보기
-7. 제목, 설명, 태그 생성
-8. Bilibili에 비디오 업로드
-9. Bilibili에 자막 업로드
+## Docker 및 배포
 
-## 설정 및 빌드
+컨테이너 관련 상세 내용은 아래 문서를 참고하세요.
 
-주요 실행 설정 파일은 `config.toml`입니다.
+- [docker/README.md](docker/README.md): Docker 기반 테스트/배포 절차.
+- [README.docker.md](README.docker.md): Docker 기반 개발 절차.
+
+GitHub 공개용으로는 메인 README를 간결하게 유지하고, 운영 세부 사항은 위 문서로 분리하는 구성이 적합합니다.
+
+## 빌드 및 검증
+
+자주 사용하는 명령:
 
 ```bash
-cp config.toml.example config.toml
-```
-
-주요 설정 항목:
-
-- `server.port`: 서비스 포트
-- `database.*`: 데이터베이스 연결 정보
-- `workflow.*`: 다운로드 디렉터리, 프록시, ffmpeg, yt-dlp 등 워크플로 설정
-- `api2key.*`: AI, 크레딧, 번역, TTS 등 통합 백엔드 기능
-- `updater.enabled`: 자동 업데이트 스위치
-
-빌드 명령:
-
-```bash
+make dev
+make web-dev
 make build
-make build-dev
-make build-linux-arm64
-make build-all
+make build-linux-amd64
+make test
+make vet
 ```
 
-파이프라인을 확장하려면 먼저 `internal/chain_task/` 아래 구현을 확인하세요.
-
-## 검증 명령
+검증 예시:
 
 ```bash
 go test ./...
@@ -198,9 +141,22 @@ go build -o ytb2bili main.go
 curl http://localhost:8096/health
 ```
 
-## 라이선스 및 연락처
+## 문서
 
-- 라이선스: [MIT License](LICENSE)
+- [Documentation Index](docs/INDEX.md)
+- [Project Guide](PROJECT_GUIDE.md)
+- [Configuration Guide](docs/CONFIG_GUIDE.md)
+- [Deployment Guide](DEPLOYMENT_GUIDE.md)
+
+## 라이선스
+
+[MIT License](LICENSE)
+
+## 기여
+
+Issue 와 Pull Request 를 환영합니다.
+
+## 연락처
+
 - GitHub: [@difyz9](https://github.com/difyz9)
-- 프로젝트: [https://github.com/difyz9/ytb2bili](https://github.com/difyz9/ytb2bili)
-- QQ 그룹: 773066052
+- Repository: [https://github.com/difyz9/ytb2bili](https://github.com/difyz9/ytb2bili)

@@ -1,0 +1,1333 @@
+{
+  "code": 200,
+  "message": "获取声音列表成功",
+  "data": {
+    "provider": "tencent",
+    "total": 48,
+    "voices": [
+      {
+        "provider": "tencent",
+        "shortName": "502007",
+        "displayName": "智小虎",
+        "localName": "智小虎",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天童声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "502006",
+        "displayName": "智小悟",
+        "localName": "智小悟",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "502005",
+        "displayName": "智小解",
+        "localName": "智小解",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "解说男声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "502004",
+        "displayName": "智小满",
+        "localName": "智小满",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Female",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "营销女声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "502003",
+        "displayName": "智小敏",
+        "localName": "智小敏",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Female",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "502001",
+        "displayName": "智小柔",
+        "localName": "智小柔",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Female",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "602004",
+        "displayName": "暖心阿灿",
+        "localName": "暖心阿灿",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "602005",
+        "displayName": "专业梓欣",
+        "localName": "专业梓欣",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Female",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "603000",
+        "displayName": "懂事少年",
+        "localName": "懂事少年",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "特色男声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "603001",
+        "displayName": "潇湘妹妹",
+        "localName": "潇湘妹妹",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Female",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "特色女声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "603002",
+        "displayName": "软萌心心",
+        "localName": "软萌心心",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "特色男童声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "603003",
+        "displayName": "随和老李",
+        "localName": "随和老李",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "603004",
+        "displayName": "温柔小柠",
+        "localName": "温柔小柠",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Female",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "603005",
+        "displayName": "知心大林",
+        "localName": "知心大林",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "603006",
+        "displayName": "沉稳青叔",
+        "localName": "沉稳青叔",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Male",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "603007",
+        "displayName": "邻家女孩",
+        "localName": "邻家女孩",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Female",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "602003",
+        "displayName": "爱小悠",
+        "localName": "爱小悠",
+        "locale": "zh-CN",
+        "localeName": "中文 / English",
+        "gender": "Female",
+        "voiceType": "超自然大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN",
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501000",
+        "displayName": "智斌",
+        "localName": "智斌",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "阅读男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501001",
+        "displayName": "智兰",
+        "localName": "智兰",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "资讯女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501002",
+        "displayName": "智菊",
+        "localName": "智菊",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "阅读女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501003",
+        "displayName": "智宇",
+        "localName": "智宇",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "阅读男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501004",
+        "displayName": "月华",
+        "localName": "月华",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501005",
+        "displayName": "飞镜",
+        "localName": "飞镜",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501006",
+        "displayName": "千嶂",
+        "localName": "千嶂",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501007",
+        "displayName": "浅草",
+        "localName": "浅草",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501008",
+        "displayName": "WeJames",
+        "localName": "WeJames",
+        "locale": "en-US",
+        "localeName": "English",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "外语男声",
+        "supportedLanguages": [
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "501009",
+        "displayName": "WeWinny",
+        "localName": "WeWinny",
+        "locale": "en-US",
+        "localeName": "English",
+        "gender": "Female",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "外语女声",
+        "supportedLanguages": [
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "601008",
+        "displayName": "爱小豪",
+        "localName": "爱小豪",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral",
+          "sad",
+          "happy",
+          "angry",
+          "fear",
+          "sajiao",
+          "amaze",
+          "disgusted",
+          "peaceful"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "601009",
+        "displayName": "爱小芊",
+        "localName": "爱小芊",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral",
+          "sad",
+          "happy",
+          "angry",
+          "fear",
+          "sajiao",
+          "amaze",
+          "disgusted",
+          "peaceful"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "601010",
+        "displayName": "爱小娇",
+        "localName": "爱小娇",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral",
+          "sad",
+          "happy",
+          "angry",
+          "fear",
+          "sajiao",
+          "amaze",
+          "disgusted",
+          "peaceful"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "601011",
+        "displayName": "爱小川",
+        "localName": "爱小川",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "601012",
+        "displayName": "爱小璟",
+        "localName": "爱小璟",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "特色女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "601013",
+        "displayName": "爱小伊",
+        "localName": "爱小伊",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "阅读女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "601014",
+        "displayName": "爱小简",
+        "localName": "爱小简",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "大模型音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "24000",
+        "sampleRates": [
+          "8000",
+          "16000",
+          "24000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "聊天男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101050",
+        "displayName": "WeJack",
+        "localName": "WeJack",
+        "locale": "en-US",
+        "localeName": "English",
+        "gender": "Male",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "英文男声",
+        "supportedLanguages": [
+          "en-US"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101055",
+        "displayName": "智付",
+        "localName": "智付",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "通用女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101013",
+        "displayName": "智辉",
+        "localName": "智辉",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "新闻男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101019",
+        "displayName": "智彤",
+        "localName": "智彤",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "粤语女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101030",
+        "displayName": "智柯",
+        "localName": "智柯",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "通用男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101054",
+        "displayName": "智友",
+        "localName": "智友",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "通用男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101027",
+        "displayName": "智梅",
+        "localName": "智梅",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "通用女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101026",
+        "displayName": "智希",
+        "localName": "智希",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "通用女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101004",
+        "displayName": "智云",
+        "localName": "智云",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "通用男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101015",
+        "displayName": "智萌",
+        "localName": "智萌",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "男童声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101011",
+        "displayName": "智燕",
+        "localName": "智燕",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "新闻女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101001",
+        "displayName": "智瑜",
+        "localName": "智瑜",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "情感女声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101021",
+        "displayName": "智瑞",
+        "localName": "智瑞",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Male",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "新闻男声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      },
+      {
+        "provider": "tencent",
+        "shortName": "101016",
+        "displayName": "智甜",
+        "localName": "智甜",
+        "locale": "zh-CN",
+        "localeName": "中文",
+        "gender": "Female",
+        "voiceType": "精品音色",
+        "styles": [],
+        "roles": [],
+        "sampleRateHertz": "16000",
+        "sampleRates": [
+          "8000",
+          "16000"
+        ],
+        "status": "Available",
+        "secondaryLocales": [],
+        "recommendedScene": "女童声",
+        "supportedLanguages": [
+          "zh-CN"
+        ],
+        "emotions": [
+          "neutral"
+        ]
+      }
+    ]
+  }
+}

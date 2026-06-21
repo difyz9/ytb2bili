@@ -1,0 +1,28 @@
+.PHONY: web-install
+web-install:
+	cd web && npm install
+
+.PHONY: web-dev
+web-dev:
+	cd web && npm run dev
+
+.PHONY: web-export
+web-export:
+	cd web && npm run export
+
+.PHONY: build-with-web
+build-with-web: web-export
+	go build -o ytb2bili .
+
+.PHONY: build
+build:
+	go build -o ytb2bili .
+
+.PHONY: run
+run: build
+	./ytb2bili
+
+.PHONY: clean
+clean:
+	rm -rf web/out web/.next
+	rm -f ytb2bili
